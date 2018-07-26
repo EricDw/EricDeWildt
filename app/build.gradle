@@ -1,0 +1,103 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-kapt'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+apply plugin: 'idea'
+
+android {
+    compileSdkVersion 27
+    defaultConfig {
+        applicationId "com.publicmethod.ericdewildt"
+        minSdkVersion 22
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+
+idea {
+    module {
+        sourceDirs += files(
+                'build/generated/source/kapt/main',
+                'build/generated/source/kapt/debug',
+                'build/generated/source/kapt/release',
+                'build/generated/source/kaptKotlin/main',
+                'build/generated/source/kaptKotlin/debug',
+                'build/generated/source/kaptKotlin/release',
+                'build/tmp/kapt/main/kotlinGenerated')
+        generatedSourceDirs += files(
+                'build/generated/source/kapt/main',
+                'build/generated/source/kapt/debug',
+                'build/generated/source/kapt/release',
+                'build/generated/source/kaptKotlin/main',
+                'build/generated/source/kaptKotlin/debug',
+                'build/generated/source/kaptKotlin/release',
+                'build/tmp/kapt/main/kotlinGenerated')
+    }
+}
+
+def room_version = "1.1.1"
+def lifecycle_version = "1.1.1"
+def arrow_version = "0.7.2"
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+
+//    Room
+    implementation "android.arch.persistence.room:runtime:$room_version"
+    kapt "android.arch.persistence.room:compiler:$room_version"
+
+//    Arrow
+    implementation "io.arrow-kt:arrow-core:$arrow_version"
+    implementation "io.arrow-kt:arrow-syntax:$arrow_version"
+    implementation "io.arrow-kt:arrow-typeclasses:$arrow_version"
+    implementation "io.arrow-kt:arrow-data:$arrow_version"
+    implementation "io.arrow-kt:arrow-instances-core:$arrow_version"
+    implementation "io.arrow-kt:arrow-instances-data:$arrow_version"
+    kapt "io.arrow-kt:arrow-annotations-processor:$arrow_version"
+
+    implementation "io.arrow-kt:arrow-free:$arrow_version"
+    implementation "io.arrow-kt:arrow-mtl:$arrow_version"
+    implementation "io.arrow-kt:arrow-effects:$arrow_version"
+    implementation "io.arrow-kt:arrow-effects-rx2:$arrow_version"
+    implementation "io.arrow-kt:arrow-effects-kotlinx-coroutines:$arrow_version"
+    implementation "io.arrow-kt:arrow-optics:$arrow_version"
+    implementation "io.arrow-kt:arrow-generic:$arrow_version"
+
+//    Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+
+//    Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
+
+//    Testing
+    implementation 'com.github.EricDw:TestingUtilsExample:v0.0.2-alpha'
+    testImplementation 'junit:junit:4.12'
+    testImplementation "android.arch.core:core-testing:$lifecycle_version"
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation project(path: ':archer')
+}
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
