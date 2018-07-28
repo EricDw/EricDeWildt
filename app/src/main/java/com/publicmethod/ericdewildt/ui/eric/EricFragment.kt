@@ -1,8 +1,8 @@
 package com.publicmethod.ericdewildt.ui.eric
 
-import android.arch.lifecycle.Observer
+import androidx.lifecycle.Observer
 import android.os.Bundle
-import android.support.v4.app.Fragment
+import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -40,8 +40,12 @@ class EricFragment : Fragment() {
 
         with(viewModel.state.value) {
             this?.run { render(this) }
-                    ?: issueInitializeCommand()
         }
+
+        fab.setOnClickListener {
+            issueInitializeCommand()
+        }
+
     }
 
     private fun issueInitializeCommand() {

@@ -1,6 +1,6 @@
 package com.publicmethod.ericdewildt.ui.eric
 
-import android.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.publicmethod.ericdewildt.data.TestLeftEricRepository
 import com.publicmethod.ericdewildt.data.TestRightEricRepository
 import com.publicmethod.ericdewildt.scopes.Scopes.GetEricScope

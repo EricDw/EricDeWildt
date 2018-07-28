@@ -2,7 +2,7 @@
 
 package com.publicmethod.archer
 
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.ViewModel
 import com.publicmethod.archer.Archer.Command
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel

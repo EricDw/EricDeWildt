@@ -1,7 +1,7 @@
 package com.publicmethod.ericdewildt.ui.eric.mvc
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.publicmethod.archer.Archer
 import com.publicmethod.archer.LightBow
 import com.publicmethod.ericdewildt.ui.eric.mvc.algebras.EricAction
