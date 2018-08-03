@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">EricDeWildt</string>
+    <string name="picture_content_description_of_eric">Picture of Eric De Wildt</string>
+    <string name="text_loading">LOADING</string>
+    <string name="text_description">DESCRIPTION</string>
+    <string name="error_message_eric_not_found">Eric Was Not Found</string>
 </resources>
