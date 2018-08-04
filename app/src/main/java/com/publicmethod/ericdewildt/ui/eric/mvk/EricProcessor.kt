@@ -2,6 +2,7 @@ package com.publicmethod.ericdewildt.ui.eric.mvk
 
 import com.publicmethod.archer.Archer
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction
+import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction.InitializeAction
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricResult
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricResult.InitializeResult
 import kotlinx.coroutines.experimental.Job
@@ -13,32 +14,36 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 fun ericProcessor(
         parentJob: Job,
-        backgroundContext: CoroutineContext,
-        fletching: SendChannel<Archer.FletchingMessage>
-): SendChannel<EricAction> = actor(parent = parentJob,
+        backgroundContext: CoroutineContext
+): SendChannel<Archer.Message<EricAction>> = actor(parent = parentJob,
         context = backgroundContext,
         capacity = Channel.UNLIMITED) {
 
-    fun sendResult(result: EricResult) {
+    fun sendResult(result: EricResult, returnChannel: SendChannel<Archer.FletchingMessage>) {
         launch(backgroundContext) {
-            fletching.send(Archer.FletchingMessage.ResultMessage(result))
+            returnChannel.send(Archer.FletchingMessage.ResultMessage(result))
         }
     }
 
-    fun processInitializeAction(action: EricAction.InitializeAction) {
-        sendResult(EricResult.ShowLoadingResult)
-        sendResult(InitializeResult(action.getEricScope.ericRepository.getItem()))
+    fun processInitializeAction(
+            action: InitializeAction,
+            returnChannel: SendChannel<Archer.FletchingMessage>
+    ) {
+        sendResult(EricResult.ShowLoadingResult, returnChannel)
+        sendResult(InitializeResult(action.getEricScope.ericRepository.getItem()), returnChannel)
     }
 
-    fun processEmailEricAction(action: EricAction.EmailEricAction) {
-        sendResult(EricResult.EmailEricResult)
+    fun processEmailEricAction(returnChannel: SendChannel<Archer.FletchingMessage>) {
+        sendResult(EricResult.EmailEricResult, returnChannel)
     }
 
-    for (action in channel) {
-        when (action) {
-            is EricAction.InitializeAction -> processInitializeAction(action)
-            is EricAction.EmailEricAction -> processEmailEricAction(action)
-        }
+    for (msg in channel) when (msg.data) {
+        is InitializeAction -> processInitializeAction(
+                msg.data as InitializeAction,
+                msg.returnChannel
+        )
+
+        is EricAction.EmailEricAction -> processEmailEricAction(msg.returnChannel)
     }
 }
 

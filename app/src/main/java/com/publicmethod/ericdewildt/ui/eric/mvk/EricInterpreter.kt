@@ -3,6 +3,7 @@ package com.publicmethod.ericdewildt.ui.eric.mvk
 import com.publicmethod.archer.Archer
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand
+import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand.InitializeKommand
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.SendChannel
@@ -13,38 +14,44 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 fun ericInterpreter(
         parentJob: Job,
-        backgroundContext: CoroutineContext,
-        fletching: SendChannel<Archer.FletchingMessage>)
-        : SendChannel<EricKommand> = actor(
+        backgroundContext: CoroutineContext)
+        : SendChannel<Archer.Message<EricKommand>> = actor(
         parent = parentJob,
         context = backgroundContext,
         capacity = Channel.UNLIMITED) {
 
     var isInitialized = false
 
-    fun sendAction(ericAction: EricAction) {
+    fun sendAction(ericAction: EricAction, returnChannel: SendChannel<Archer.FletchingMessage>) {
         launch(backgroundContext) {
-            fletching.send(
+            returnChannel.send(
                     Archer.FletchingMessage.ActionMessage(ericAction))
         }
     }
 
-    fun interpretInitializeCommand(command: EricKommand.InitializeKommand) {
+    fun interpretInitializeCommand(
+            command: InitializeKommand,
+            returnChannel: SendChannel<Archer.FletchingMessage>
+    ) {
         if (!isInitialized) {
             isInitialized = true
-            sendAction(EricAction.InitializeAction(command.getEricScope))
+            sendAction(EricAction.InitializeAction(command.getEricScope), returnChannel)
         }
     }
 
-    fun interpretEmailEricCommand(command: EricKommand.EmailEricKommand) {
-        sendAction(EricAction.EmailEricAction)
+    fun interpretEmailEricCommand(
+            returnChannel: SendChannel<Archer.FletchingMessage>
+    ) {
+        sendAction(EricAction.EmailEricAction, returnChannel)
     }
 
-    for (command in channel) {
-        when (command) {
-            is EricKommand.InitializeKommand -> interpretInitializeCommand(command)
-            is EricKommand.EmailEricKommand -> interpretEmailEricCommand(command)
+    for (msg in channel) {
+        when (msg.data) {
+            is InitializeKommand -> interpretInitializeCommand(
+                    msg.data as InitializeKommand,
+                    msg.returnChannel
+            )
+            is EricKommand.EmailEricKommand -> interpretEmailEricCommand(msg.returnChannel)
         }
     }
 }
-

@@ -7,12 +7,23 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import arrow.core.Id
 import arrow.data.run
+import com.publicmethod.archer.Archer.FletchingMessage.*
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
+
+typealias ArcherActor<T> = (
+        parentJob: Job,
+        backgroundContext: CoroutineContext
+) -> SendChannel<Archer.Message<T>>
+
+typealias Actor<T> = (
+        parentJob: Job,
+        backgroundContext: CoroutineContext
+) -> SendChannel<T>
 
 object Archer {
 
@@ -37,46 +48,80 @@ object Archer {
     sealed class FletchingMessage {
         open class ActionMessage<A : Action>(val action: A) : FletchingMessage()
         open class ResultMessage<R : Result>(val result: R) : FletchingMessage()
-        open class KommandMessage<K : Kommand>(val Kommand: K) : FletchingMessage()
+        open class KommandMessage<K : Kommand>(val kommand: K) : FletchingMessage()
         open class StateMessage<S : State>(val state: S) : FletchingMessage()
     }
+
+    data class Message<T>(val data: T, val returnChannel: SendChannel<FletchingMessage>)
 
     fun <M : Model, A : Action, R : Result, K : Kommand, S : State> arrowFletching(
             parentJob: Job,
             backgroundContext: CoroutineContext,
             uiContext: CoroutineContext,
             initialModel: M,
-            interpreter: (parentJob: Job,
-                          backgroundContext: CoroutineContext,
-                          channel: SendChannel<FletchingMessage>)
-            -> SendChannel<K>,
-            processor: (parentJob: Job,
-                        backgroundContext: CoroutineContext,
-                        channel: SendChannel<FletchingMessage>)
-            -> SendChannel<A>,
+            interpreter: ArcherActor<K>,
+            processor: ArcherActor<A>,
             reduceState: (result: R) -> arrow.data.State<M, S>,
-            stateHandler: (parentJob: Job,
-                           uiContext: CoroutineContext)
-            -> SendChannel<S>
+            stateActor: Actor<S>
     ): SendChannel<FletchingMessage> = actor(
             parent = parentJob,
             context = backgroundContext,
             capacity = Channel.UNLIMITED) {
 
-        val interpreterActor by lazy { interpreter(parentJob, backgroundContext, channel) }
-        val processorActor by lazy { processor(parentJob, backgroundContext, channel) }
-        val reducerActor by lazy { reducerActor(parentJob, backgroundContext, channel, initialModel, reduceState) }
-        val stateHandlerActor by lazy { stateHandler(parentJob, uiContext) }
+        val interpreterActor by lazy {
+            interpreter(
+                    parentJob,
+                    backgroundContext)
+        }
+        val processorActor by lazy {
+            processor(
+                    parentJob,
+                    backgroundContext
+            )
+        }
+        val reducerActor by lazy {
+            reducerActor(
+                    parentJob,
+                    backgroundContext,
+                    channel,
+                    initialModel,
+                    reduceState
+            )
+        }
+        val stateHandlerActor by lazy {
+            stateActor(
+                    parentJob,
+                    uiContext
+            )
+        }
 
         for (msg in channel) {
             when (msg) {
-                is FletchingMessage.ActionMessage<*> -> processorActor.send(msg.action as A)
-                is FletchingMessage.ResultMessage<*> -> reducerActor.send(msg.result as R)
-                is FletchingMessage.KommandMessage<*> -> interpreterActor.send(msg.Kommand as K)
-                is FletchingMessage.StateMessage<*> -> stateHandlerActor.send(msg.state as S)
+
+                is KommandMessage<*> ->
+                    interpreterActor.send(
+                            Message(
+                                    msg.kommand as K,
+                                    channel
+                            ))
+
+                is ActionMessage<*> ->
+                    processorActor.send(
+                            Message(
+                                    msg.action as A,
+                                    channel
+                            ))
+
+                is ResultMessage<*> ->
+                    reducerActor.send(msg.result as R)
+
+                is StateMessage<*> ->
+                    stateHandlerActor.send(msg.state as S)
+
             }
         }
     }
+
 
     fun <M : Model, R : Result, S : State> reducerActor(
             parentJob: Job,
@@ -91,10 +136,10 @@ object Archer {
 
         var currentModel: M = initialModel
 
-        for (result in this.channel) {
+        for (result in channel) {
             val reduction = reduceState(result).run(currentModel)
             currentModel = reduction.a
-            fletching.send(FletchingMessage.StateMessage(reduction.b))
+            fletching.send(StateMessage(reduction.b))
         }
     }
 
@@ -103,19 +148,14 @@ object Archer {
             A : Action,
             R : Result,
             K : Kommand,
-            S : State>(protected val backgroundContext: CoroutineContext,
-                              protected val uiContext: CoroutineContext,
-                              initialModel: M,
-                              parentJob: Job = Job(),
-                              interpreter: (parentJob: Job,
-                                            backgroundContext: CoroutineContext,
-                                            channel: SendChannel<FletchingMessage>)
-                              -> SendChannel<K>,
-                              processor: (parentJob: Job,
-                                          backgroundContext: CoroutineContext,
-                                          channel: SendChannel<FletchingMessage>)
-                              -> SendChannel<A>,
-                              reduceState: (result: R) -> arrow.data.State<M, S>
+            S : State>(
+            protected val backgroundContext: CoroutineContext,
+            uiContext: CoroutineContext,
+            initialModel: M,
+            parentJob: Job = Job(),
+            interpreter: ArcherActor<K>,
+            processor: ArcherActor<A>,
+            reduceState: (result: R) -> arrow.data.State<M, S>
     ) : ViewModel(),
             Kommandable<K>,
             StateHandler<S> {
@@ -147,16 +187,15 @@ object Archer {
 
         override fun issueKommand(kommand: K) {
             launch(backgroundContext) {
-                fletching.send(FletchingMessage.KommandMessage(kommand))
+                fletching.send(KommandMessage(kommand))
             }
         }
 
         override fun handleState(state: S) {
-            launch(uiContext) {
-                mutableState.value = state
-            }
+            mutableState.value = state
         }
     }
+
 }
 
 fun <A> A.toId() = Id.just(this)
