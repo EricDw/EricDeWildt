@@ -5,6 +5,6 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlin.coroutines.experimental.CoroutineContext
 
 open class ContextProvider {
-    open val uiContext : CoroutineContext = UI
-    open val backgroundContext : CoroutineContext = CommonPool
+    open fun uiContext() : CoroutineContext = UI
+    open fun backgroundContext() : CoroutineContext = CommonPool
 }

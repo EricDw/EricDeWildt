@@ -2,69 +2,85 @@ package com.publicmethod.ericdewildt.ui.eric.mvk
 
 import arrow.core.Option
 import arrow.core.some
-import arrow.core.toT
-import arrow.data.State
 import com.publicmethod.archer.Archer
-import com.publicmethod.archer.Archer.reducerActor
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricResult
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricState
-import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlin.coroutines.experimental.CoroutineContext
 
-fun ericReducer(
-        parentJob: Job,
-        backgroundContext: CoroutineContext,
-        fletching: SendChannel<Archer.FletchingMessage>,
-        initialModel: EricModel
-): SendChannel<EricResult> = reducerActor(
-        parentJob,
-        backgroundContext,
-        fletching,
-        initialModel,
-        ::ericReduction)
+fun ericReducer(): Archer.Reducer<EricResult, EricState> =
+        object : Archer.Reducer<EricResult, EricState> {
 
-fun ericReduction(result: EricResult): State<EricModel, EricState> {
+            private var ericModel = EricModel()
 
-    fun reduceShowLoadingResult()
-            : State<EricModel, EricState> =
-            State { oldModel ->
+            override suspend fun reduce(result: EricResult, stateChannel: SendChannel<EricState>) {
+                when (result) {
+                    is EricResult.InitializeResult -> reduceInitializeResult(
+                            result,
+                            stateChannel
+                    )
 
-                val newModel: EricModel = oldModel.copy(isLoading = true)
-                val state: EricState = EricState.ShowLoadingState(newModel)
+                    is EricResult.ShowLoadingResult -> reduceShowLoadingResult(
+                            result,
+                            stateChannel
+                    )
 
-                newModel toT state
+                    is EricResult.EmailEricResult -> reduceEmailEricResult(
+                            result,
+                            stateChannel
+                    )
 
+                    is EricResult.DismissSnackBarResult -> reduceDismissSnackBarResult(
+                            result,
+                            stateChannel
+                    )
+
+                }
             }
 
-    fun reduceInitializeResult(result: EricResult.InitializeResult)
-            : State<EricModel, EricState> =
-            State { oldModel ->
+            private suspend fun reduceShowLoadingResult(
+                    result: EricResult.ShowLoadingResult,
+                    stateChannel: SendChannel<EricState>
+            ) {
+
+                ericModel = ericModel.copy(isLoading = true)
+                stateChannel.send(EricState.ShowLoadingState(ericModel))
+            }
+
+            private suspend fun reduceInitializeResult(
+                    result: EricResult.InitializeResult,
+                    stateChannel: SendChannel<EricState>
+            ) {
                 lateinit var newModel: EricModel
                 lateinit var state: EricState
 
                 result.eric.fold(
                         { error ->
-                            newModel = oldModel.copy(error =
+                            newModel = ericModel.copy(error =
                             Option.fromNullable(error))
                             state = EricState.ShowErrorState(newModel)
                         },
                         { eric ->
-                            newModel = oldModel.copy(eric = eric.some())
+                            newModel = ericModel.copy(eric = eric.some())
                             state = EricState.ShowEricState(newModel)
                         })
 
-                newModel toT state
+                ericModel = newModel
+                stateChannel.send(state)
+
             }
 
-    fun reduceEmailEricResult(result: EricResult.EmailEricResult): State<EricModel, EricState> =
-            State { oldModel ->
-                oldModel toT EricState.ShowEmailEricState
+            private suspend fun reduceEmailEricResult(
+                    result: EricResult.EmailEricResult,
+                    stateChannel: SendChannel<EricState>
+            ) {
+                stateChannel.send(EricState.ShowEmailEricState)
             }
 
-    return when (result) {
-        is EricResult.InitializeResult -> reduceInitializeResult(result)
-        is EricResult.ShowLoadingResult -> reduceShowLoadingResult()
-        is EricResult.EmailEricResult -> reduceEmailEricResult(result)
-    }
-}
+            private suspend fun reduceDismissSnackBarResult(
+                    result: EricResult,
+                    stateChannel: SendChannel<EricState>
+            ) {
+                ericModel = ericModel.copy(showSnackBar = false)
+                stateChannel.send(EricState.DismissSnackBar(ericModel))
+            }
+        }

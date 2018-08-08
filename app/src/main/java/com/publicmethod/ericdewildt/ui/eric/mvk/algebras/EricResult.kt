@@ -9,4 +9,5 @@ sealed class EricResult : Archer.Result {
     data class InitializeResult(val eric: Either<EricError, Eric>) : EricResult()
     object ShowLoadingResult : EricResult()
     object EmailEricResult : EricResult()
+    object DismissSnackBarResult : EricResult()
 }

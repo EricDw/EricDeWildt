@@ -4,6 +4,6 @@ import kotlinx.coroutines.experimental.Unconfined
 import kotlin.coroutines.experimental.CoroutineContext
 
 open class TestContextProvider : ContextProvider() {
-    override val uiContext : CoroutineContext = Unconfined
-    override val backgroundContext : CoroutineContext = Unconfined
+    override fun uiContext() : CoroutineContext = Unconfined
+    override fun backgroundContext() : CoroutineContext = Unconfined
 }

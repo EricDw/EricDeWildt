@@ -2,7 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/eric"
+    android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.eric.EricFragment">
@@ -36,16 +36,14 @@
             <ImageView
                 android:id="@+id/imageView_profile"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:contentDescription="@string/picture_content_description_of_eric"
-                android:scaleType="fitStart"
+                android:scaleType="fitCenter"
                 android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/guideline_center_horizontal"
-                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
                 app:srcCompat="@mipmap/eric"
                 tools:visibility="visible" />
 
@@ -86,10 +84,10 @@
                 style="@style/TextAppearance.AppCompat.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textAlignment="center"
                 android:textColor="@color/colorAccent"
                 android:textStyle="bold"
                 android:visibility="gone"
-                android:textAlignment="center"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/imageView_profile"
@@ -114,8 +112,8 @@
 
             <TextView
                 android:id="@+id/textView_description"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="8dp"
@@ -124,11 +122,11 @@
                 android:paddingBottom="16dp"
                 android:textAlignment="textStart"
                 android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="@+id/progressBar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_description_title"
-                tools:text="@tools:sample/lorem/random"
+                tools:text="@tools:sample/lorem"
                 tools:visibility="visible" />
 
 

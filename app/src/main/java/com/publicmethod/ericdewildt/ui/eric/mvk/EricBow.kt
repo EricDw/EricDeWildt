@@ -9,11 +9,10 @@ import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricState
 import kotlinx.coroutines.experimental.Job
 
 class EricBow(contextProvider: ContextProvider = ContextProvider())
-    : Archer.Bow<EricModel, EricAction, EricResult, EricKommand, EricState>(
-        contextProvider.backgroundContext,
-        contextProvider.uiContext,
-        EricModel(),
+    : Archer.Bow<EricAction, EricResult, EricKommand, EricState>(
         Job(),
-        ::ericInterpreter,
+        contextProvider::backgroundContext,
+        ::ericReducer,
         ::ericProcessor,
-        ::ericReduction)
+        ::ericInterpreter
+)
