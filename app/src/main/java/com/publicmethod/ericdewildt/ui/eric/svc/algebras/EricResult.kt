@@ -1,4 +1,4 @@
-package com.publicmethod.ericdewildt.ui.eric.mvk.algebras
+package com.publicmethod.ericdewildt.ui.eric.svc.algebras
 
 import arrow.core.Either
 import com.publicmethod.archer.Archer

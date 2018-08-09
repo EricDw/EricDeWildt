@@ -12,6 +12,7 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.launch
@@ -30,17 +31,18 @@ object Archer {
 
 //region Interfaces
 
-    interface Kommand
+    interface Command
     interface Action
     interface Result
     interface State
 
-    interface ViewController<S: State> {
+    interface ViewController<C: Command, S: State> {
+        val commands: ReceiveChannel<C>
         fun render(state: S)
     }
 
-    interface Interpreter<K : Kommand, A : Action> {
-        suspend fun interpret(kommand: K, actionChannel: SendChannel<A>)
+    interface Interpreter<C : Command, A : Action> {
+        suspend fun interpret(command: C, actionChannel: SendChannel<A>)
     }
 
     interface Processor<A : Action, R : Result> {
@@ -51,9 +53,14 @@ object Archer {
         suspend fun reduce(result: R, stateChannel: SendChannel<S>)
     }
 
+    interface StateMachine<C: Command, S: State> {
+        fun handleCommands(commands: ReceiveChannel<C>)
+        val state: LiveData<S>
+    }
+
 //endregion Interfaces
 
-    fun <K : Kommand, A : Action> interpreterChannel(
+    fun <K : Command, A : Action> interpreterChannel(
             interpreter: Interpreter<K, A>,
             actionChannel: SendChannel<A>,
             parent: Job,
@@ -104,20 +111,20 @@ object Archer {
     abstract class Bow<
             A : Action,
             R : Result,
-            K : Kommand,
+            C : Command,
             S : State>(
             parent: Job = Job(),
             backgroundContext: () -> CoroutineContext,
-            reducer: () -> Reducer<R, S>,
+            reducer: (CoroutineContext) -> Reducer<R, S>,
             processor: (CoroutineContext) -> Processor<A, R>,
-            interpreter: () -> Interpreter<K, A>
-    ) : ViewModel() {
+            interpreter: (CoroutineContext) -> Interpreter<C, A>
+    ) : ViewModel(), StateMachine<C, S> {
 
         private val background = backgroundContext()
 
         protected open val mutableState: MutableLiveData<S> = MutableLiveData()
 
-        open val state: LiveData<S>
+        override val state: LiveData<S>
             get() = mutableState
 
         protected open val stateChannel: SendChannel<S> = actor(
@@ -132,7 +139,7 @@ object Archer {
 
         protected open val reducerChannel: SendChannel<R> by lazy {
             reducerChannel(
-                    reducer(),
+                    reducer(background),
                     stateChannel,
                     parent,
                     background)
@@ -146,20 +153,21 @@ object Archer {
                     background)
         }
 
-        protected open val interpreterChannel: SendChannel<K> by lazy {
+        protected open val interpreterChannel: SendChannel<C> by lazy {
             interpreterChannel(
-                    interpreter(),
+                    interpreter(background),
                     processorChannel,
                     parent,
                     background)
         }
 
-        open fun issueKommand(kommand: K) {
-            launch(context = background) {
-                interpreterChannel.send(kommand)
+        override fun handleCommands(commands: ReceiveChannel<C>) {
+            launch(background) {
+                for (command in commands){
+                    interpreterChannel.send(command)
+                }
             }
         }
-
     }
 
     fun functionWorker(

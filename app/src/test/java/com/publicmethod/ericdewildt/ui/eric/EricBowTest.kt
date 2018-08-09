@@ -7,10 +7,10 @@ import com.publicmethod.ericdewildt.data.TestLeftEricRepository
 import com.publicmethod.ericdewildt.data.TestRightEricRepository
 import com.publicmethod.ericdewildt.scopes.Scopes.GetEricScope
 import com.publicmethod.ericdewildt.threading.TestContextProvider
-import com.publicmethod.ericdewildt.ui.eric.mvk.EricBow
-import com.publicmethod.ericdewildt.ui.eric.mvk.EricState
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand.InitializeKommand
+import com.publicmethod.ericdewildt.ui.eric.svc.EricBow
+import com.publicmethod.ericdewildt.ui.eric.svc.EricState
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand.InitializeCommand
 import com.publicmethod.kotlintestingutils.assertTrueWithMessage
 import org.junit.Before
 import org.junit.Rule
@@ -34,11 +34,11 @@ class EricBowTest {
     @Test
     fun given_Right_InitializeCommand_return_Some_Eric() {
         // Arrange
-        val input = InitializeKommand(GetEricScope(TestRightEricRepository()))
+        val input = InitializeCommand(GetEricScope(TestRightEricRepository()))
         val expectedOutput = true
 
         // Act
-        viewModel.issueKommand(input)
+        viewModel.issueCommand(input)
         val actualOutput = state.eric is Some
 
         // Assert
@@ -50,11 +50,11 @@ class EricBowTest {
     @Test
     fun given_Left_InitializeCommand_return_None_Eric() {
         // Arrange
-        val input = InitializeKommand(GetEricScope(TestLeftEricRepository()))
+        val input = InitializeCommand(GetEricScope(TestLeftEricRepository()))
         val expectedOutput = true
 
         // Act
-        viewModel.issueKommand(input)
+        viewModel.issueCommand(input)
         val actualOutput = state.eric is None
 
         // Assert
@@ -66,11 +66,11 @@ class EricBowTest {
     @Test
     fun given_EmailEricCommand_return_ShowSnackBar_is_true() {
         // Arrange
-        val input = EricKommand.EmailEricKommand
+        val input = EricCommand.EmailEricCommand
         val expectedOutput = true
 
         // Act
-        viewModel.issueKommand(input)
+        viewModel.issueCommand(input)
         val actualOutput = state.showSnackBar
 
         // Assert

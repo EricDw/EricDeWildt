@@ -1,14 +1,17 @@
-package com.publicmethod.ericdewildt.ui.eric.mvk.pipeline
+package com.publicmethod.ericdewildt.ui.eric.svc.pipeline
 
 import arrow.core.Option
 import arrow.core.some
 import com.publicmethod.archer.Archer
-import com.publicmethod.ericdewildt.ui.eric.mvk.EricState
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricResult.*
+import com.publicmethod.ericdewildt.threading.ContextProvider
+import com.publicmethod.ericdewildt.ui.eric.svc.EricState
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricResult
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricResult.*
 import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlin.coroutines.experimental.CoroutineContext
 
-fun ericReducer(): Archer.Reducer<EricResult, EricState> =
+fun ericReducer(backgroundContext: CoroutineContext = ContextProvider().backgroundContext())
+        : Archer.Reducer<EricResult, EricState> =
         object : Archer.Reducer<EricResult, EricState> {
 
             private var ericState = EricState()

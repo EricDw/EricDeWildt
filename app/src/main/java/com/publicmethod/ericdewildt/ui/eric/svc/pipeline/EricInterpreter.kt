@@ -1,27 +1,30 @@
-package com.publicmethod.ericdewildt.ui.eric.mvk.pipeline
+package com.publicmethod.ericdewildt.ui.eric.svc.pipeline
 
 import com.publicmethod.archer.Archer
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand.*
+import com.publicmethod.ericdewildt.threading.ContextProvider
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricAction
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand.*
 import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlin.coroutines.experimental.CoroutineContext
 
 
-fun ericInterpreter(): Archer.Interpreter<EricKommand, EricAction> =
-        object : Archer.Interpreter<EricKommand, EricAction> {
+fun ericInterpreter(backgroundContext: CoroutineContext = ContextProvider().backgroundContext())
+        : Archer.Interpreter<EricCommand, EricAction> =
+        object : Archer.Interpreter<EricCommand, EricAction> {
             var isInitialized = false
 
             override suspend fun interpret(
-                    kommand: EricKommand,
+                    command: EricCommand,
                     actionChannel: SendChannel<EricAction>
             ) {
-                when (kommand) {
-                    is InitializeKommand -> interpretInitializeCommand(
-                            kommand,
+                when (command) {
+                    is InitializeCommand -> interpretInitializeCommand(
+                            command,
                             actionChannel
                     )
-                    is EmailEricKommand -> interpretEmailEricCommand(actionChannel)
-                    is DismissSnackBarKommand -> interpretDismissSnackBarKommand(actionChannel)
+                    is EmailEricCommand -> interpretEmailEricCommand(actionChannel)
+                    is DismissSnackBarCommand -> interpretDismissSnackBarKommand(actionChannel)
                 }
 
             }
@@ -31,7 +34,7 @@ fun ericInterpreter(): Archer.Interpreter<EricKommand, EricAction> =
             }
 
             private suspend fun interpretInitializeCommand(
-                    command: InitializeKommand,
+                    command: InitializeCommand,
                     actionChannel: SendChannel<EricAction>
             ) {
                 if (!isInitialized) {
@@ -45,7 +48,5 @@ fun ericInterpreter(): Archer.Interpreter<EricKommand, EricAction> =
             ) {
                 actionChannel.send(EricAction.EmailEricAction)
             }
-
-
         }
 
