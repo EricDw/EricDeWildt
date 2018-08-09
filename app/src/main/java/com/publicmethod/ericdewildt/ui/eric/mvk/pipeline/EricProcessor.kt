@@ -1,12 +1,15 @@
-package com.publicmethod.ericdewildt.ui.eric.mvk
+package com.publicmethod.ericdewildt.ui.eric.mvk.pipeline
 
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.some
 import com.publicmethod.archer.Archer
 import com.publicmethod.archer.Archer.FunctionWorkerMessage
-import com.publicmethod.archer.Archer.FunctionWorkerMessage.*
+import com.publicmethod.archer.Archer.addWork
 import com.publicmethod.archer.Archer.functionWorker
+import com.publicmethod.archer.Archer.startOrRestartWork
+import com.publicmethod.archer.Archer.stopWork
+import com.publicmethod.archer.FunctionWorker
 import com.publicmethod.ericdewildt.threading.ContextProvider
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction.*
@@ -103,11 +106,18 @@ fun ericProcessor(): Archer.Processor<EricAction, EricResult> =
 private fun ericSupervisorActor(
         backgroundContext: CoroutineContext,
         resultChannel: SendChannel<EricResult>
-) = actor<EricAction>(
+): SendChannel<EricAction> = actor(
         context = backgroundContext
 ) {
 
-    val emailWorker: SendChannel<FunctionWorkerMessage> by lazy { functionWorker() }
+    val worker: FunctionWorker by lazy { functionWorker() }
+
+    val dismissSnackBarKey = "dismissEmail"
+
+    worker.addWork(dismissSnackBarKey) {
+        delay(2L, TimeUnit.SECONDS)
+        resultChannel.send(DismissSnackBarResult)
+    }
 
     for (action in channel) when (action) {
 
@@ -115,17 +125,14 @@ private fun ericSupervisorActor(
         }
 
         is EmailEricAction -> {
-            emailWorker.send(StartWork({
-                delay(5L, TimeUnit.SECONDS)
-                resultChannel.send(DismissSnackBarResult)
-            }))
+            worker.startOrRestartWork(dismissSnackBarKey)
         }
 
         is DismissSnackBarAction -> {
-            emailWorker.send(
-                    StopWork
-            )
+            worker.stopWork(dismissSnackBarKey)
         }
     }
 
 }
+
+

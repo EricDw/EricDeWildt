@@ -8,7 +8,6 @@ import com.publicmethod.ericdewildt.threading.TestContextProvider
 import com.publicmethod.ericdewildt.ui.eric.mvk.EricBow
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand.InitializeKommand
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricState
 import com.publicmethod.kotlintestingutils.assertTrueWithMessage
 import org.junit.Before
 import org.junit.Rule

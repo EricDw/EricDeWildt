@@ -11,17 +11,18 @@ import androidx.lifecycle.Observer
 import arrow.core.Option
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import com.publicmethod.archer.Archer.ViewController
 import com.publicmethod.ericdewildt.R
+import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.extensions.getViewModel
 import com.publicmethod.ericdewildt.scopes.Scopes
 import com.publicmethod.ericdewildt.scopes.Scopes.getEricScope
 import com.publicmethod.ericdewildt.ui.eric.mvk.EricBow
+import com.publicmethod.ericdewildt.ui.eric.mvk.EricState
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricState
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricState.*
 import kotlinx.android.synthetic.main.eric_fragment.*
 
-class EricFragment : Fragment() {
+class EricFragment : Fragment(), ViewController<EricState> {
 
     companion object {
         fun newInstance() = EricFragment()
@@ -76,20 +77,30 @@ class EricFragment : Fragment() {
         }
     }
 
-    private fun render(state: EricState) =
-            when (state) {
-                is ShowErrorState -> renderShowErrorState(state)
-                is ShowEricState -> renderShowEricState(state)
-                is ShowLoadingState -> renderShowLoadingState(state)
-                is EricState.ShowEmailEricState -> renderShowEmailState(state)
-                is EricState.DismissSnackBar -> renderDismissSnackBarState(state)
-            }
+    override fun render(state: EricState) {
+        with(state) {
 
-    private fun renderDismissSnackBarState(state: DismissSnackBar) {
+            if (isLoading) renderLoadingState()
+
+            error.fold({}, {
+                renderShowErrorState()
+            })
+            eric.fold({}, {
+                renderShowEricState(it)
+            })
+
+            when(showSnackBar) {
+                true -> renderShowEmailState()
+                false -> renderDismissSnackBarState()
+            }
+        }
+    }
+
+    private fun renderDismissSnackBarState() {
         snackBar.dismiss()
     }
 
-    private fun renderShowEmailState(state: ShowEmailEricState) {
+    private fun renderShowEmailState() {
         context?.run {
             with(snackBar) {
                 setAction("DISMISS") { issueDismissSnackBarCommand() }
@@ -102,18 +113,22 @@ class EricFragment : Fragment() {
         viewModel.issueKommand(EricKommand.DismissSnackBarKommand)
     }
 
-    private fun renderShowLoadingState(state: ShowLoadingState) {
+    private fun renderLoadingState() {
         hideProfileViews()
         showStatusViews()
     }
 
-    private fun renderShowEricState(state: ShowEricState) {
-        state.ericModel.eric.fold({}, {
+    private fun renderShowEricState(eric: Eric) {
             hideStatusViews()
             showProfileViews()
-            textView_fullName.text = it.fullName
-            textView_description.text = it.description
-        })
+            textView_fullName.text = eric.fullName
+            textView_description.text = eric.description
+    }
+
+    private fun renderShowErrorState() {
+        hideProfileViews()
+        showStatusViews()
+        status_message.text = getString(R.string.error_message_eric_not_found)
     }
 
     private fun showProfileViews() {
@@ -138,14 +153,6 @@ class EricFragment : Fragment() {
     private fun hideStatusViews() {
         status_message.visibility = GONE
         progressBar.visibility = GONE
-    }
-
-    private fun renderShowErrorState(state: ShowErrorState) {
-        state.ericModel.error.fold({}, {
-            hideProfileViews()
-            showStatusViews()
-            status_message.text = getString(R.string.error_message_eric_not_found)
-        })
     }
 
 }

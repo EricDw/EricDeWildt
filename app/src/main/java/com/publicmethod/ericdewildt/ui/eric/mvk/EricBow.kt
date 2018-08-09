@@ -5,7 +5,9 @@ import com.publicmethod.ericdewildt.threading.ContextProvider
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricKommand
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricState
+import com.publicmethod.ericdewildt.ui.eric.mvk.pipeline.ericInterpreter
+import com.publicmethod.ericdewildt.ui.eric.mvk.pipeline.ericProcessor
+import com.publicmethod.ericdewildt.ui.eric.mvk.pipeline.ericReducer
 import kotlinx.coroutines.experimental.Job
 
 class EricBow(contextProvider: ContextProvider = ContextProvider())

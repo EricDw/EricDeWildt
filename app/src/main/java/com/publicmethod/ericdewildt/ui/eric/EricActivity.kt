@@ -1,8 +1,8 @@
-package com.publicmethod.ericdewildt
+package com.publicmethod.ericdewildt.ui.eric
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.publicmethod.ericdewildt.ui.eric.EricFragment
+import com.publicmethod.ericdewildt.R
 
 class EricActivity : AppCompatActivity() {
 

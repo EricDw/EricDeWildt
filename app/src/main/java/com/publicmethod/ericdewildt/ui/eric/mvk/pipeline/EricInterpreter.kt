@@ -1,4 +1,4 @@
-package com.publicmethod.ericdewildt.ui.eric.mvk
+package com.publicmethod.ericdewildt.ui.eric.mvk.pipeline
 
 import com.publicmethod.archer.Archer
 import com.publicmethod.ericdewildt.ui.eric.mvk.algebras.EricAction

@@ -6,8 +6,8 @@ import com.publicmethod.archer.Archer
 import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.data.algebras.EricError
 
-data class EricModel(val eric: Option<Eric> = None,
+data class EricState(val eric: Option<Eric> = None,
                      val error: Option<EricError> = None,
                      val isLoading: Boolean = false,
-                     val showSnackBar: Boolean = false) : Archer.Model
+                     val showSnackBar: Boolean = false) : Archer.State
 
