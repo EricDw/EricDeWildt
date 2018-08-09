@@ -156,6 +156,7 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
         textView_fullName.visibility = VISIBLE
         textView_description_title.visibility = VISIBLE
         textView_description.visibility = VISIBLE
+        recyclerView.visibility = VISIBLE
     }
 
     private fun hideProfileViews() {
@@ -163,6 +164,7 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
         textView_fullName.visibility = GONE
         textView_description_title.visibility = GONE
         textView_description.visibility = GONE
+        recyclerView.visibility = VISIBLE
     }
 
     private fun showStatusViews() {

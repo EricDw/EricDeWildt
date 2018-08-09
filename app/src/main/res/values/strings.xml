@@ -4,4 +4,5 @@
     <string name="text_loading">LOADING</string>
     <string name="text_description">DESCRIPTION</string>
     <string name="error_message_eric_not_found">Eric Was Not Found</string>
+    <string name="content_description_picture_of_a_star">Picture of A Star</string>
 </resources>
