@@ -4,7 +4,6 @@ import arrow.core.None
 import arrow.core.Option
 import arrow.core.some
 import com.publicmethod.archer.Archer
-import com.publicmethod.archer.Archer.FunctionWorkerMessage
 import com.publicmethod.archer.Archer.addWork
 import com.publicmethod.archer.Archer.functionWorker
 import com.publicmethod.archer.Archer.startOrRestartWork
@@ -22,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
 
-fun ericProcessor(): Archer.Processor<EricAction, EricResult> =
+fun ericProcessor(backgroundContext: CoroutineContext = ContextProvider().backgroundContext()): Archer.Processor<EricAction, EricResult> =
         object : Archer.Processor<EricAction, EricResult> {
 
             private var supervisor: Option<SendChannel<EricAction>> = None
@@ -90,7 +89,7 @@ fun ericProcessor(): Archer.Processor<EricAction, EricResult> =
             ) {
                 supervisor.fold({
                     val newSupervisor = ericSupervisorActor(
-                            ContextProvider().backgroundContext(),
+                            backgroundContext,
                             resultChannel
                     )
                     supervisor = newSupervisor.some()
@@ -110,7 +109,7 @@ private fun ericSupervisorActor(
         context = backgroundContext
 ) {
 
-    val worker: FunctionWorker by lazy { functionWorker() }
+    val worker: FunctionWorker by lazy { functionWorker(backgroundContext = backgroundContext) }
 
     val dismissSnackBarKey = "dismissEmail"
 

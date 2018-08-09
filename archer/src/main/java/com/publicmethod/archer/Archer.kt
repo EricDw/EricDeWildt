@@ -109,7 +109,7 @@ object Archer {
             parent: Job = Job(),
             backgroundContext: () -> CoroutineContext,
             reducer: () -> Reducer<R, S>,
-            processor: () -> Processor<A, R>,
+            processor: (CoroutineContext) -> Processor<A, R>,
             interpreter: () -> Interpreter<K, A>
     ) : ViewModel() {
 
@@ -140,7 +140,7 @@ object Archer {
 
         protected open val processorChannel: SendChannel<A> by lazy {
             processorChannel(
-                    processor(),
+                    processor(background),
                     reducerChannel,
                     parent,
                     background)
@@ -176,7 +176,7 @@ object Archer {
             is FunctionWorkerMessage.StartOrRestartWork -> {
                 work.getOption(msg.key).fold({}, { function ->
                     jobs[msg.key]?.cancel()
-                    jobs[msg.key] = launch {
+                    jobs[msg.key] = launch(backgroundContext) {
                         function()
                     }
                 })
