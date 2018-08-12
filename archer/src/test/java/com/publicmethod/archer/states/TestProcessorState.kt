@@ -1,6 +1,7 @@
 package com.publicmethod.archer.states
 
 import com.publicmethod.archer.Archer
+import com.publicmethod.archer.DEFAULT_TEST_STRING
 import com.publicmethod.archer.FunctionWorker
 
 data class TestProcessorState(val text: String = DEFAULT_TEST_STRING,

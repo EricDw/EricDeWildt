@@ -5,16 +5,15 @@ import arrow.core.some
 import arrow.core.toT
 import arrow.data.State
 import com.publicmethod.archer.Archer.FunctionWorkerMessage.*
+import com.publicmethod.archer.PROCESSED_LEFT
+import com.publicmethod.archer.PROCESSED_RIGHT
+import com.publicmethod.archer.WORKER_KEY
 import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestResult
 import com.publicmethod.archer.states.TestProcessorState
 import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.launch
-
-const val PROCESSED_RIGHT = "Processed Right"
-const val PROCESSED_LEFT = "Processed Left"
-const val WORKER_KEY = "work_key"
 
 fun processTestAction(action: TestAction, reducer: SendChannel<TestResult>)
         : State<TestProcessorState, Option<TestResult>> =

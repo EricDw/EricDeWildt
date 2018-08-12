@@ -3,7 +3,9 @@ package com.publicmethod.archer
 import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestCommand
 import com.publicmethod.archer.algebras.TestResult
-import com.publicmethod.archer.pipeline.*
+import com.publicmethod.archer.pipeline.interpretTestCommand
+import com.publicmethod.archer.pipeline.processTestAction
+import com.publicmethod.archer.pipeline.reduceTestResult
 import com.publicmethod.archer.states.TestInterpreterState
 import com.publicmethod.archer.states.TestProcessorState
 import com.publicmethod.archer.states.TestReducerState

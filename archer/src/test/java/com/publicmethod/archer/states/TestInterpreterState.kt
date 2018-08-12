@@ -1,7 +1,7 @@
 package com.publicmethod.archer.states
 
 import com.publicmethod.archer.Archer
+import com.publicmethod.archer.DEFAULT_TEST_STRING
 
-const val DEFAULT_TEST_STRING = "DEFAULT"
 
-data class TestInterpreterState(val text: String = DEFAULT_TEST_STRING): Archer.State
+data class TestInterpreterState(val text: String = DEFAULT_TEST_STRING) : Archer.State

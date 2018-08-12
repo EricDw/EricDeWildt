@@ -4,13 +4,11 @@ import arrow.core.Option
 import arrow.core.some
 import arrow.core.toT
 import arrow.data.State
+import com.publicmethod.archer.INTERPRETED_LEFT
+import com.publicmethod.archer.INTERPRETED_RIGHT
 import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestCommand
-import com.publicmethod.archer.algebras.TestResult
 import com.publicmethod.archer.states.TestInterpreterState
-
-const val INTERPRETED_RIGHT = "Interpreted Right"
-const val INTERPRETED_LEFT = "Interpreted Left"
 
 fun interpretTestCommand(command: TestCommand)
         : State<TestInterpreterState, Option<TestAction>> =
