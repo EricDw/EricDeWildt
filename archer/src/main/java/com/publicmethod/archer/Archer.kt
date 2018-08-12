@@ -18,7 +18,6 @@ import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 
-
 typealias FunctionWorker = SendChannel<Archer.FunctionWorkerMessage>
 
 object Archer {
@@ -36,7 +35,7 @@ object Archer {
     interface Result
     interface State
 
-    interface ViewController<C: Command, S: State> {
+    interface ViewController<C : Command, S : State> {
         val commands: ReceiveChannel<C>
         fun render(state: S)
     }
@@ -53,7 +52,7 @@ object Archer {
         suspend fun reduce(result: R, stateChannel: SendChannel<S>)
     }
 
-    interface StateMachine<C: Command, S: State> {
+    interface StateMachine<C : Command, S : State> {
         fun handleCommands(commands: ReceiveChannel<C>)
         val state: LiveData<S>
     }
@@ -163,7 +162,7 @@ object Archer {
 
         override fun handleCommands(commands: ReceiveChannel<C>) {
             launch(background) {
-                for (command in commands){
+                for (command in commands) {
                     interpreterChannel.send(command)
                 }
             }
