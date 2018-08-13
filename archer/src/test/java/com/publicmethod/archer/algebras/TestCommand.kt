@@ -1,8 +1,8 @@
 package com.publicmethod.archer.algebras
 
-import com.publicmethod.archer.Archer
+import com.publicmethod.archer.Command
 
-sealed class TestCommand : Archer.Command{
+sealed class TestCommand : Command {
     object RightCommand: TestCommand()
     object LeftCommand: TestCommand()
 }

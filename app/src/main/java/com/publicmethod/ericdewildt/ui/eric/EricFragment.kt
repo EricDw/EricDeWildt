@@ -18,9 +18,9 @@ import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.extensions.getViewModel
 import com.publicmethod.ericdewildt.scopes.Scopes
 import com.publicmethod.ericdewildt.scopes.Scopes.getEricScope
-import com.publicmethod.ericdewildt.ui.eric.svc.EricBow
-import com.publicmethod.ericdewildt.ui.eric.svc.EricState
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.bow.EricBow
+import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import kotlinx.android.synthetic.main.eric_fragment.*
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
@@ -45,7 +45,7 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
     }
 
     private val snackBar: Snackbar by lazy {
-        Snackbar.make(coordinator, "Emailing Eric State", Snackbar.LENGTH_INDEFINITE)
+        Snackbar.make(coordinator, "Emailing Eric StateData", Snackbar.LENGTH_INDEFINITE)
     }
 
     private val fabButton: FloatingActionButton by lazy { fab }

@@ -1,12 +1,13 @@
 package com.publicmethod.archer
 
+import arrow.core.Some
 import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestCommand
 import com.publicmethod.archer.algebras.TestResult
 import com.publicmethod.archer.pipeline.interpretTestCommand
 import com.publicmethod.archer.pipeline.processTestAction
 import com.publicmethod.archer.pipeline.reduceTestResult
-import com.publicmethod.archer.states.TestInterpreterState
+import com.publicmethod.archer.states.TestInterpreterStateData
 import com.publicmethod.archer.states.TestProcessorState
 import com.publicmethod.archer.states.TestReducerState
 import kotlinx.coroutines.experimental.Job
@@ -16,18 +17,18 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 
-class SVCMachineTests {
+class BowTests {
 
-    private lateinit var machine: SVCMachine<TestAction, TestResult, TestCommand, TestReducerState>
+    private lateinit var bow: Bow<TestAction, TestResult, TestCommand, TestReducerState>
     private lateinit var parent: Job
 
     @Before
     fun setUp() {
         parent = Job()
-        machine = svcMachine(
-                TestInterpreterState(),
-                TestProcessorState(worker = Archer.functionWorker(parent, Unconfined)),
-                TestReducerState(),
+        bow = bow(
+                Some(TestInterpreterStateData()),
+                Some(TestProcessorState(worker = functionWorker(parent, Unconfined))),
+                Some(TestReducerState()),
                 ::interpretTestCommand,
                 ::processTestAction,
                 ::reduceTestResult,
@@ -42,8 +43,8 @@ class SVCMachineTests {
         val expected = TestReducerState(REDUCED_RIGHT)
 
 //        Act
-        machine.commandChannel().send(input)
-        val actual = machine.stateChannel().receive()
+        bow.commandChannel().send(input)
+        val actual = bow.stateChannel().receive()
 
 //        Assert
         Assert.assertEquals(expected, actual)
@@ -57,8 +58,8 @@ class SVCMachineTests {
         val expected = TestReducerState(REDUCED_LEFT)
 
 //        Act
-        machine.commandChannel().send(input)
-        val actual = machine.stateChannel().receive()
+        bow.commandChannel().send(input)
+        val actual = bow.stateChannel().receive()
 
 //        Assert
         Assert.assertEquals(expected, actual)
@@ -72,8 +73,8 @@ class SVCMachineTests {
         val expected = TestReducerState(REDUCED_WORKER)
 
 //        Act
-        machine.processorChannel().send(input)
-        val actual = machine.stateChannel().receive()
+        bow.processorChannel().send(input)
+        val actual = bow.stateChannel().receive()
 
 //        Assert
         Assert.assertEquals(expected, actual)

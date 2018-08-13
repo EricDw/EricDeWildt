@@ -1,19 +1,17 @@
-package com.publicmethod.ericdewildt.ui.eric.svc.pipeline
+package com.publicmethod.ericdewildt.ui.eric.bow.pipeline
 
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.some
-import com.publicmethod.archer.Archer
-import com.publicmethod.archer.Archer.addWork
-import com.publicmethod.archer.Archer.functionWorker
-import com.publicmethod.archer.Archer.startOrRestartWork
-import com.publicmethod.archer.Archer.stopWork
 import com.publicmethod.archer.FunctionWorker
+import com.publicmethod.archer.functionWorker
+import com.publicmethod.archer.startOrRestartWork
+import com.publicmethod.archer.stopWork
 import com.publicmethod.ericdewildt.threading.ContextProvider
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricAction
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricAction.*
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricResult.*
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction.*
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult.*
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.delay
@@ -103,7 +101,7 @@ fun ericProcessor(backgroundContext: CoroutineContext = ContextProvider().backgr
 
         }
 
-private fun ericSupervisorActor(
+fun ericSupervisorActor(
         backgroundContext: CoroutineContext,
         resultChannel: SendChannel<EricResult>
 ): SendChannel<EricAction> = actor(
@@ -121,7 +119,8 @@ private fun ericSupervisorActor(
 
     for (action in channel) when (action) {
 
-        is InitializeAction -> {}
+        is InitializeAction -> {
+        }
 
         is EmailEricAction -> {
             worker.startOrRestartWork(dismissSnackBarKey)

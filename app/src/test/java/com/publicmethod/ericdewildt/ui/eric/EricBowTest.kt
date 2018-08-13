@@ -7,10 +7,10 @@ import com.publicmethod.ericdewildt.data.TestLeftEricRepository
 import com.publicmethod.ericdewildt.data.TestRightEricRepository
 import com.publicmethod.ericdewildt.scopes.Scopes.GetEricScope
 import com.publicmethod.ericdewildt.threading.TestContextProvider
-import com.publicmethod.ericdewildt.ui.eric.svc.EricBow
-import com.publicmethod.ericdewildt.ui.eric.svc.EricState
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand
-import com.publicmethod.ericdewildt.ui.eric.svc.algebras.EricCommand.InitializeCommand
+import com.publicmethod.ericdewildt.ui.eric.bow.EricBow
+import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.InitializeCommand
 import com.publicmethod.kotlintestingutils.assertTrueWithMessage
 import org.junit.Before
 import org.junit.Rule
