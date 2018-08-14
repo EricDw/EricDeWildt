@@ -15,8 +15,10 @@ import com.publicmethod.ericdewildt.ui.eric.bow.states.EricProcessorState
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import kotlinx.coroutines.experimental.Job
 
-class EricBow(contextProvider: ContextProvider = ContextProvider())
+class EricViewModel(contextProvider: ContextProvider = ContextProvider())
     : ViewModel() {
+
+    private val parentJob = Job()
 
     val bow = bow<
             EricAction,
@@ -29,12 +31,10 @@ class EricBow(contextProvider: ContextProvider = ContextProvider())
             initialProcessorState = Some(EricProcessorState()),
             initialReducerState = Some(EricState()),
             interpret = ::interpretEricCommand,
-            process =
-            Job(),
-            contextProvider::backgroundContext,
-            ::ericReducer,
-            ::processEricAction,
-            ::interpretEricCommand
+            process = ::processEricAction,
+            reduce = ::ericReducer,
+            backgroundContext = contextProvider::backgroundContext,
+            parent = parentJob
     )
 
 }

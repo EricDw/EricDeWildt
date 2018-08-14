@@ -18,7 +18,7 @@ import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.extensions.getViewModel
 import com.publicmethod.ericdewildt.scopes.Scopes
 import com.publicmethod.ericdewildt.scopes.Scopes.getEricScope
-import com.publicmethod.ericdewildt.ui.eric.bow.EricBow
+import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import kotlinx.android.synthetic.main.eric_fragment.*
@@ -40,8 +40,8 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
         }
     }
 
-    private val viewModel: EricBow by lazy {
-        this.getViewModel<EricBow>()
+    private val viewModel: EricViewModel by lazy {
+        this.getViewModel<EricViewModel>()
     }
 
     private val snackBar: Snackbar by lazy {

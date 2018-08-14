@@ -7,7 +7,7 @@ import com.publicmethod.ericdewildt.data.TestLeftEricRepository
 import com.publicmethod.ericdewildt.data.TestRightEricRepository
 import com.publicmethod.ericdewildt.scopes.Scopes.GetEricScope
 import com.publicmethod.ericdewildt.threading.TestContextProvider
-import com.publicmethod.ericdewildt.ui.eric.bow.EricBow
+import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.InitializeCommand
@@ -16,18 +16,18 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class EricBowTest {
+class EricViewModelTest {
 
     @Rule
     @JvmField
     val rule = InstantTaskExecutorRule()
 
-    private lateinit var viewModel: EricBow
+    private lateinit var viewModel: EricViewModel
     private lateinit var state: EricState
 
     @Before
     fun setUp() {
-        viewModel = EricBow(TestContextProvider())
+        viewModel = EricViewModel(TestContextProvider())
         viewModel.state.observeForever { state = it }
     }
 
