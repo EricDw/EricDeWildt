@@ -11,7 +11,6 @@ import androidx.lifecycle.Observer
 import arrow.core.Option
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.publicmethod.archer.Archer.ViewController
 import com.publicmethod.archer.whenClicking
 import com.publicmethod.ericdewildt.R
 import com.publicmethod.ericdewildt.data.Eric
@@ -19,20 +18,24 @@ import com.publicmethod.ericdewildt.extensions.getViewModel
 import com.publicmethod.ericdewildt.scopes.Scopes
 import com.publicmethod.ericdewildt.scopes.Scopes.getEricScope
 import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import kotlinx.android.synthetic.main.eric_fragment.*
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.launch
 
-class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
+class EricFragment : Fragment() {
 
     companion object {
         fun newInstance() = EricFragment()
     }
 
-    private val commandsChannel: Channel<EricCommand> = Channel(Channel.UNLIMITED)
+    private val commandActor = actor<EricCommand>(CommonPool) {
+        for (command in channel) {
+            viewModel.send(command)
+        }
+    }
 
     private val ericScope: Option<Scopes.GetEricScope> by lazy {
         Option.fromNullable(context).flatMap { ctx ->
@@ -50,13 +53,10 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
 
     private val fabButton: FloatingActionButton by lazy { fab }
 
-    override val commands: ReceiveChannel<EricCommand>
-        get() = commandsChannel
-
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         return inflater.inflate(R.layout.eric_fragment, container, false)
     }
@@ -65,7 +65,6 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
         super.onActivityCreated(savedInstanceState)
 
         with(viewModel) {
-            handleCommands(commands)
             issueInitializeCommand()
             state.value?.run { render(this) }
             state.observe(this@EricFragment, Observer {
@@ -76,12 +75,12 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
         whenClicking(fabButton) {
             EricCommand.EmailEricCommand
         } then {
-            commandsChannel.offer(it)
+            commandActor.offer(it)
         }
 
     }
 
-    override fun render(state: EricState) {
+    private fun render(state: EricState) {
         with(state) {
 
             if (isLoading) renderLoadingState()
@@ -111,7 +110,7 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
     private fun issueInitializeCommand() {
         ericScope.map { getEricScope ->
             launch {
-                commandsChannel.send(EricCommand.InitializeCommand(getEricScope))
+                commandActor.send(EricCommand.InitializeCommand(getEricScope))
             }
         }
     }
@@ -125,7 +124,7 @@ class EricFragment : Fragment(), ViewController<EricCommand, EricState> {
             with(snackBar) {
                 setAction("DISMISS") {
                     launch {
-                        commandsChannel.send((EricCommand.DismissSnackBarCommand))
+                        commandActor.send((EricCommand.DismissSnackBarCommand))
                     }
                 }
                 show()

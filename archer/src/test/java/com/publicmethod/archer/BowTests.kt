@@ -26,14 +26,15 @@ class BowTests {
     fun setUp() {
         parent = Job()
         bow = bow(
-                Some(TestInterpreterState()),
-                Some(TestProcessorState(worker = functionWorker(parent, Unconfined))),
-                Some(TestReducerState()),
-                ::interpretTestCommand,
-                ::processTestAction,
-                ::reduceTestResult,
-                Unconfined,
-                parent)
+            Some(TestInterpreterState()),
+            Some(TestProcessorState(worker = functionWorker(parent, Unconfined))),
+            Some(TestReducerState()),
+            ::interpretTestCommand,
+            ::processTestAction,
+            ::reduceTestResult,
+            Unconfined,
+            parent
+        )
     }
 
     @Test

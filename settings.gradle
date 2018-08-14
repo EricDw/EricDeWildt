@@ -1,1 +1,1 @@
-include ':app', ':archer', ':data'
+include ':app', ':archer'

@@ -1,59 +1,77 @@
 package com.publicmethod.ericdewildt.ui.eric.bow.pipeline
 
-import arrow.core.Option
-import arrow.core.some
-import com.publicmethod.archer.Archer
-import com.publicmethod.ericdewildt.threading.ContextProvider
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import arrow.core.*
+import arrow.data.State
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult.*
+import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.launch
 
-fun ericReducer(backgroundContext: CoroutineContext = ContextProvider().backgroundContext())
-        : Archer.Reducer<EricResult, EricState> =
-        object : Archer.Reducer<EricResult, EricState> {
-
-            private var ericState = EricState()
-
-            override suspend fun reduce(
-                    result: EricResult,
-                    stateChannel: SendChannel<EricState>
-            ) {
-                ericState = when (result) {
+fun reduceEricResult(
+    result: EricResult,
+    stateChannel: SendChannel<EricState>
+): State<Option<EricState>, Option<EricState>> =
+    State { optionalState ->
+        optionalState.fold({
+            None toT None
+        }, { someState ->
+            return@State with(
+                when (result) {
                     is InitializeResult ->
-                        reduceInitializeResult(result)
+                        reducedInitializeResult(
+                            result,
+                            someState
+                        )
 
                     is ShowLoadingResult ->
-                        reduceShowLoadingResult()
+                        reducedShowLoadingResult(
+                            someState
+                        )
 
                     is EmailEricResult ->
-                        reduceEmailEricResult()
+                        reducedEmailEricResult(
+                            someState
+                        )
 
                     is DismissSnackBarResult ->
-                        reduceDismissSnackBarResult()
+                        reducedDismissSnackBarResult(
+                            someState
+                        )
                 }
-                stateChannel.send(ericState)
+            ) {
+                launch(someState.backgroundContext) {
+                    stateChannel.send(this@with)
+                }
+
+                Some(this) toT Some(this)
             }
+        })
+    }
 
-            private fun reduceShowLoadingResult(): EricState =
-                    ericState.copy(isLoading = true)
+fun reducedInitializeResult(
+    result: InitializeResult,
+    state: EricState
+): EricState =
+    result.eric.fold(
+        { error ->
+            state.copy(error = Option.fromNullable(error))
+        },
+        { eric ->
+            state.copy(eric = eric.some())
+        })
 
-            private fun reduceInitializeResult(
-                    result: InitializeResult
-            ): EricState =
-                    result.eric.fold(
-                            { error ->
-                                ericState.copy(error = Option.fromNullable(error))
-                            },
-                            { eric ->
-                                ericState.copy(eric = eric.some())
-                            })
+fun reducedShowLoadingResult(
+    state: EricState
+): EricState =
+    state.copy(isLoading = true)
 
-            private fun reduceEmailEricResult(): EricState =
-                    ericState.copy(showSnackBar = true)
+fun reducedEmailEricResult(
+    state: EricState
+): EricState =
+    state.copy(showSnackBar = true)
 
-            private fun reduceDismissSnackBarResult(): EricState =
-                    ericState.copy(showSnackBar = false)
-
-        }
+fun reducedDismissSnackBarResult(
+    state: EricState
+): EricState =
+    state.copy(showSnackBar = false)

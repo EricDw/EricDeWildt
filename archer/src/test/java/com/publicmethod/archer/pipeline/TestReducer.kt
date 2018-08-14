@@ -12,34 +12,36 @@ import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.launch
 
 fun reduceTestResult(
-        result: TestResult,
-        stateChannel: SendChannel<TestReducerState>
+    result: TestResult,
+    stateChannel: SendChannel<TestReducerState>
 ): State<Option<TestReducerState>, Option<TestReducerState>> =
-        State { internalState ->
-            internalState.fold({ None toT None }, { state ->
-                return@State with(when (result) {
+    State { optionState ->
+        optionState.fold({ None toT None }, { nonOptionState ->
+            return@State with(
+                when (result) {
                     TestResult.RightResult ->
-                        reduceRight(state)
+                        reduceRight(nonOptionState)
 
                     TestResult.LeftResult ->
-                        reduceLeft(state)
+                        reduceLeft(nonOptionState)
 
                     TestResult.WorkerResult ->
-                        reduceWorker(state)
-                }) {
-                    launch(Unconfined) {
-                        stateChannel.send(this@with)
-                    }
-                    Some(this) toT Some(this)
+                        reduceWorker(nonOptionState)
                 }
-            })
-        }
+            ) {
+                launch(Unconfined) {
+                    stateChannel.send(this@with)
+                }
+                Some(this) toT Some(this)
+            }
+        })
+    }
 
 fun reduceWorker(reducerState: TestReducerState) =
-        reducerState.copy(text = REDUCED_WORKER)
+    reducerState.copy(text = REDUCED_WORKER)
 
 fun reduceLeft(reducerState: TestReducerState) =
-        reducerState.copy(text = REDUCED_LEFT)
+    reducerState.copy(text = REDUCED_LEFT)
 
 fun reduceRight(reducerState: TestReducerState) =
-        reducerState.copy(text = REDUCED_RIGHT)
+    reducerState.copy(text = REDUCED_RIGHT)

@@ -32,7 +32,7 @@ data class Work(val name: JobName, val jobFunction: suspend () -> Job)
 
 sealed class FunctionWorkerMessage {
     data class StartOrRestartWork(val jobs: List<Work>) : FunctionWorkerMessage()
-    data class StopWork(val name: JobName, val cause: Throwable?) : FunctionWorkerMessage()
+    data class StopWork(val name: JobName, val cause: Option<Throwable>) : FunctionWorkerMessage()
 }
 
 //endregion Algebraic Data Types
@@ -65,68 +65,91 @@ fun <A : Action,
         IS : StateData,
         PS : StateData,
         RS : StateData> bow(
-        initialInterpreterState: Option<IS> = None,
-        initialProcessorState: Option<PS> = None,
-        initialReducerState: Option<RS> = None,
-        interpret: (command: C, processor: SendChannel<A>) ->
-        State<Option<IS>, Option<IS>>,
-        process: (action: A, reducer: SendChannel<R>) ->
-        State<Option<PS>, Option<PS>>,
-        reduce: (result: R, stateChannel: SendChannel<RS>) ->
-        State<Option<RS>, Option<RS>>,
-        backgroundContext: CoroutineContext = CommonPool,
-        parent: Job = Job()
+    initialInterpreterState: Option<IS> = None,
+    initialProcessorState: Option<PS> = None,
+    initialReducerState: Option<RS> = None,
+    interpret: (command: C, processor: SendChannel<A>) ->
+    State<Option<IS>, Option<IS>>,
+    process: (action: A, reducer: SendChannel<R>) ->
+    State<Option<PS>, Option<PS>>,
+    reduce: (result: R, stateChannel: SendChannel<RS>) ->
+    State<Option<RS>, Option<RS>>,
+    backgroundContext: CoroutineContext = CommonPool,
+    parent: Job = Job()
 ) = object : Bow<A, R, C, RS> {
 
     private val stateChannel: Channel<RS> =
-            Channel(Channel.UNLIMITED)
+        Channel(Channel.UNLIMITED)
 
     private val reducer: SendChannel<R> =
-            pipelineActor(
-                    context = backgroundContext,
-                    capacity = Channel.UNLIMITED,
-                    parent = parent,
-                    returnChannel = stateChannel,
-                    initialInternalState = initialReducerState,
-                    reduceState = reduce)
+        pipelineActor(
+            context = backgroundContext,
+            capacity = Channel.UNLIMITED,
+            parent = parent,
+            returnChannel = stateChannel,
+            initialInternalState = initialReducerState,
+            reduceState = reduce
+        )
 
     private val processor: SendChannel<A> =
-            pipelineActor(
-                    context = backgroundContext,
-                    capacity = Channel.UNLIMITED,
-                    parent = parent,
-                    returnChannel = reducer,
-                    initialInternalState = initialProcessorState,
-                    reduceState = process)
+        pipelineActor(
+            context = backgroundContext,
+            capacity = Channel.UNLIMITED,
+            parent = parent,
+            returnChannel = reducer,
+            initialInternalState = initialProcessorState,
+            reduceState = process
+        )
 
     private val interpreter: SendChannel<C> =
-            pipelineActor(
-                    context = backgroundContext,
-                    capacity = Channel.UNLIMITED,
-                    parent = parent,
-                    returnChannel = processor,
-                    initialInternalState = initialInterpreterState,
-                    reduceState = interpret)
+        pipelineActor(
+            context = backgroundContext,
+            capacity = Channel.UNLIMITED,
+            parent = parent,
+            returnChannel = processor,
+            initialInternalState = initialInterpreterState,
+            reduceState = interpret
+        )
 
     override fun commandChannel(): SendChannel<C> =
-            interpreter
+        interpreter
 
     override fun processorChannel(): SendChannel<A> =
-            processor
+        processor
 
     override fun reducerChannel(): SendChannel<R> =
-            reducer
+        reducer
 
     override fun stateChannel(): ReceiveChannel<RS> =
-            stateChannel
+        stateChannel
 }
 
+fun <D, IS, R> pipelineActor(
+    context: CoroutineContext = CommonPool,
+    capacity: Int = 0,
+    parent: Job = Job(),
+    initialInternalState: Option<IS>,
+    returnChannel: SendChannel<R>,
+    reduceState: (dep: D, SendChannel<R>) -> State<Option<IS>, Option<IS>>
+): SendChannel<D> =
+    actor(
+        context = context,
+        capacity = capacity,
+        parent = parent
+    ) {
+        var internalState: Option<IS> = initialInternalState
+        for (dep in channel) {
+            internalState = reduceState(dep, returnChannel).runA(internalState)
+        }
+    }
+
 fun functionWorker(
-        parentJob: Job = Job(),
-        backgroundContext: CoroutineContext = CommonPool
+    parentJob: Job = Job(),
+    backgroundContext: CoroutineContext = CommonPool
 ) = actor<FunctionWorkerMessage>(
-        parent = parentJob,
-        context = backgroundContext) {
+    parent = parentJob,
+    context = backgroundContext
+) {
 
     val workMap: MutableMap<String, Pair<suspend () -> Job, Job>> = mutableMapOf()
 
@@ -138,38 +161,20 @@ fun functionWorker(
         }
 
         is FunctionWorkerMessage.StopWork -> {
-            workMap[msg.name]?.second?.cancel()
+            workMap[msg.name]?.second?.cancel(
+                msg.cause.orNull()
+            )
         }
     }
 }
 
 suspend fun FunctionWorker.startOrRestartWork(
-        jobs: List<Work>
+    jobs: List<Work>
 ): Unit = send(FunctionWorkerMessage.StartOrRestartWork(jobs))
 
-
 suspend fun FunctionWorker.stopWork(
-        key: String, cause: Throwable?
+    key: String, cause: Option<Throwable>
 ): Unit = send(FunctionWorkerMessage.StopWork(key, cause))
-
-fun <D, IS, R> pipelineActor(
-        context: CoroutineContext = CommonPool,
-        capacity: Int = 0,
-        parent: Job = Job(),
-        initialInternalState: Option<IS>,
-        returnChannel: SendChannel<R>,
-        reduceState: (dep: D, SendChannel<R>) -> State<Option<IS>, Option<IS>>
-): SendChannel<D> =
-        actor(
-                context = context,
-                capacity = capacity,
-                parent = parent
-        ) {
-            var internalState: Option<IS> = initialInternalState
-            for (dep in channel) {
-                internalState = reduceState(dep, returnChannel).runA(internalState)
-            }
-        }
 
 //endregion Functions
 

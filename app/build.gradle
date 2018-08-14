@@ -10,7 +10,10 @@ apply plugin: 'idea'
 
 android {
     compileSdkVersion 28
-    defaultConfig {
+    dexOptions {
+        javaMaxHeapSize "6g"
+    }
+        defaultConfig {
         applicationId "com.publicmethod.ericdewildt"
         minSdkVersion 22
         targetSdkVersion 28

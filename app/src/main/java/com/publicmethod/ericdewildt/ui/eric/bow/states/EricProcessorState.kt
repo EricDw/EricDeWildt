@@ -9,6 +9,6 @@ import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlin.coroutines.experimental.CoroutineContext
 
 data class EricProcessorState(
-        val backgroundContext: CoroutineContext = ContextProvider().backgroundContext(),
-        val supervisor: Option<SendChannel<EricAction>> = None
+    val backgroundContext: CoroutineContext = ContextProvider().backgroundContext(),
+    val supervisor: Option<SendChannel<EricAction>> = None
 ) : StateData

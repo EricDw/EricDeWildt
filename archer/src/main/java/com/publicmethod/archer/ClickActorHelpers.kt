@@ -22,15 +22,15 @@ class LifecycleListener(private val job: Job) : LifecycleObserver {
 }
 
 class OnClickLoader<out T>(
-        val lifecycle: Lifecycle,
-        val view: View,
-        private val loadFunction: () -> T
+    val lifecycle: Lifecycle,
+    val view: View,
+    private val loadFunction: () -> T
 ) {
     infix fun then(uiFunction: (T) -> Unit) {
         val job = Job()
         val actor = actor<Unit>(context = UI, parent = job) {
             channel.map(CommonPool) { loadFunction() }
-                    .consumeEach { uiFunction(it) }
+                .consumeEach { uiFunction(it) }
         }
 
         lifecycle.addObserver(LifecycleListener(job))
@@ -40,10 +40,11 @@ class OnClickLoader<out T>(
 }
 
 fun <T> LifecycleOwner.whenClicking(
-        view: View,
-        loadFunction: () -> T)
+    view: View,
+    loadFunction: () -> T
+)
         : OnClickLoader<T> = OnClickLoader(
-        lifecycle = lifecycle,
-        view = view,
-        loadFunction = loadFunction
+    lifecycle = lifecycle,
+    view = view,
+    loadFunction = loadFunction
 )
