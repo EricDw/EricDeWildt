@@ -7,52 +7,39 @@ import com.publicmethod.archer.REDUCED_RIGHT
 import com.publicmethod.archer.REDUCED_WORKER
 import com.publicmethod.archer.algebras.TestResult
 import com.publicmethod.archer.states.TestReducerState
+import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.launch
 
 fun reduceTestResult(
         result: TestResult,
-        stateChannel: Option<SendChannel<TestReducerState>>
+        stateChannel: SendChannel<TestReducerState>
 ): State<Option<TestReducerState>, Option<TestReducerState>> =
         State { internalState ->
-            when (result) {
-                TestResult.RightResult ->
-                    reduceRight(internalState)
+            internalState.fold({ None toT None }, { state ->
+                return@State with(when (result) {
+                    TestResult.RightResult ->
+                        reduceRight(state)
 
-                TestResult.LeftResult ->
-                    reduceLeft(internalState)
+                    TestResult.LeftResult ->
+                        reduceLeft(state)
 
-                TestResult.WorkerResult ->
-                    reduceWorker(internalState)
-            }
+                    TestResult.WorkerResult ->
+                        reduceWorker(state)
+                }) {
+                    launch(Unconfined) {
+                        stateChannel.send(this@with)
+                    }
+                    Some(this) toT Some(this)
+                }
+            })
         }
 
-private fun reduceWorker(internalState: Option<TestReducerState>)
-        : Tuple2<Option<TestReducerState>, Option<TestReducerState>> =
-        internalState.fold({
-            None toT None
+fun reduceWorker(reducerState: TestReducerState) =
+        reducerState.copy(text = REDUCED_WORKER)
 
-        }, { state ->
-            val newState = Some(state.copy(text = REDUCED_WORKER))
-            newState toT newState
-        })
+fun reduceLeft(reducerState: TestReducerState) =
+        reducerState.copy(text = REDUCED_LEFT)
 
-
-private fun reduceLeft(internalState: Option<TestReducerState>)
-        : Tuple2<Option<TestReducerState>, Option<TestReducerState>> =
-        internalState.fold({
-            None toT None
-
-        }, { state ->
-            val newState = Some(state.copy(text = REDUCED_LEFT))
-            newState toT newState
-        })
-
-private fun reduceRight(internalState: Option<TestReducerState>)
-        : Tuple2<Option<TestReducerState>, Option<TestReducerState>> =
-        internalState.fold({
-            None toT None
-
-        }, { state ->
-            val newState = Some(state.copy(text = REDUCED_RIGHT))
-            newState toT newState
-        })
+fun reduceRight(reducerState: TestReducerState) =
+        reducerState.copy(text = REDUCED_RIGHT)

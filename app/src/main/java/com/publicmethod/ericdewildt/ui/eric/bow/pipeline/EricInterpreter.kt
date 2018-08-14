@@ -8,7 +8,7 @@ import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.InitializeCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricInterpreterState
 
-fun interpretEricCommands(
+fun interpretEricCommand(
         command: EricCommand,
         processor: OptionalSendChannel<EricAction>
 ): State<Option<EricInterpreterState>, Option<EricAction>> =

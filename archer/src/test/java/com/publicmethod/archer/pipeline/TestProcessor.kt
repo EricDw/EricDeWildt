@@ -1,13 +1,13 @@
 package com.publicmethod.archer.pipeline
 
-import arrow.core.*
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.toT
 import arrow.data.State
-import com.publicmethod.archer.PROCESSED_LEFT
-import com.publicmethod.archer.PROCESSED_RIGHT
-import com.publicmethod.archer.WORKER_KEY
+import com.publicmethod.archer.*
 import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestResult
-import com.publicmethod.archer.startOrRestartWork
 import com.publicmethod.archer.states.TestProcessorState
 import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.channels.SendChannel
@@ -15,55 +15,62 @@ import kotlinx.coroutines.experimental.launch
 
 fun processTestAction(
         action: TestAction,
-        reducer: Option<SendChannel<TestResult>>
-): State<Option<TestProcessorState>, Option<TestResult>> =
-        State { internalState ->
-            when (action) {
-                is TestAction.RightAction ->
-                    processRight(internalState)
-
-                is TestAction.LeftAction ->
-                    processLeft(internalState)
-
-                is TestAction.WorkerAction ->
-                    processWorker(reducer, internalState)
-            }
-        }
-
-private fun processWorker(
-        returnChannel: Option<SendChannel<TestResult>>,
-        internalState: Option<TestProcessorState>
-): Tuple2<Option<TestProcessorState>, Option<TestResult>> =
-        returnChannel.fold({
-            internalState toT None
-        }, { rc ->
-            internalState.fold({
+        reducer: SendChannel<TestResult>
+): State<Option<TestProcessorState>, Option<TestProcessorState>> =
+        State { processorState ->
+            processorState.fold({
                 None toT None
             }, { state ->
-                launch(Unconfined) {
-                    val workerJob = WORKER_KEY to suspend {
-                        launch(Unconfined) {
-                            rc.send(TestResult.WorkerResult)
-                        }
+                return@State with(when (action) {
+
+                    is TestAction.RightAction ->
+                        processRight(
+                                state
+                        )
+
+                    is TestAction.LeftAction ->
+                        processLeft(
+                                state
+                        )
+
+                    is TestAction.WorkerAction ->
+                        processWorker(
+                                state,
+                                reducer
+                        )
+
+                }) {
+                    launch(Unconfined) {
+                        reducer.send(second)
                     }
-                    state.worker.startOrRestartWork(
-                            listOf(workerJob)
-                    )
+                    Some(first) toT Some(first)
                 }
-                Some(state.copy(text = PROCESSED_RIGHT)) toT TestResult.RightResult.some()
             })
-        })
+        }
 
-private fun processLeft(internalState: Option<TestProcessorState>) =
-        internalState.fold({
-            None toT Some(TestResult.LeftResult)
-        }, { state ->
-            Some(state.copy(text = PROCESSED_LEFT)) toT Some(TestResult.LeftResult)
-        })
+fun processRight(
+        processorState: TestProcessorState
+): Pair<TestProcessorState, TestResult> =
+        processorState.copy(text = PROCESSED_RIGHT) to TestResult.RightResult
 
-private fun processRight(internalState: Option<TestProcessorState>) =
-        internalState.fold({
-            None toT Some(TestResult.RightResult)
-        }, { state ->
-            Some(state.copy(text = PROCESSED_RIGHT)) toT Some(TestResult.RightResult)
-        })
+fun processLeft(
+        processorState: TestProcessorState
+): Pair<TestProcessorState, TestResult> =
+        processorState.copy(text = PROCESSED_LEFT) to TestResult.LeftResult
+
+fun processWorker(
+        processorState: TestProcessorState,
+        returnChannel: SendChannel<TestResult>
+): Pair<TestProcessorState, TestResult> {
+    launch(Unconfined) {
+        val work: Work = WORKER_KEY to suspend {
+            launch(Unconfined) {
+                returnChannel.send(TestResult.WorkerResult)
+            }
+        }
+        processorState.worker.startOrRestartWork(
+                listOf(work)
+        )
+    }
+    return processorState.copy(text = PROCESSED_RIGHT) to TestResult.RightResult
+}

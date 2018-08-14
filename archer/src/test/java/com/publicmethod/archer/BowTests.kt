@@ -7,7 +7,7 @@ import com.publicmethod.archer.algebras.TestResult
 import com.publicmethod.archer.pipeline.interpretTestCommand
 import com.publicmethod.archer.pipeline.processTestAction
 import com.publicmethod.archer.pipeline.reduceTestResult
-import com.publicmethod.archer.states.TestInterpreterStateData
+import com.publicmethod.archer.states.TestInterpreterState
 import com.publicmethod.archer.states.TestProcessorState
 import com.publicmethod.archer.states.TestReducerState
 import kotlinx.coroutines.experimental.Job
@@ -26,7 +26,7 @@ class BowTests {
     fun setUp() {
         parent = Job()
         bow = bow(
-                Some(TestInterpreterStateData()),
+                Some(TestInterpreterState()),
                 Some(TestProcessorState(worker = functionWorker(parent, Unconfined))),
                 Some(TestReducerState()),
                 ::interpretTestCommand,

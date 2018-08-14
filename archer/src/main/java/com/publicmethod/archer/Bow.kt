@@ -1,28 +1,38 @@
 package com.publicmethod.archer
 
-import arrow.core.*
+import arrow.core.Id
+import arrow.core.None
+import arrow.core.Option
 import arrow.data.State
-import arrow.data.run
+import arrow.data.runA
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 
 //region aliases
+
 typealias FunctionWorker = SendChannel<FunctionWorkerMessage>
 
 typealias OptionalSendChannel<T> = Option<SendChannel<T>>
+typealias JobName = String
+
 //endregion aliases
+
+//region Data Classes
+
+data class Work(val name: JobName, val jobFunction: suspend () -> Job)
+
+//endregion Data Classes
 
 //region Algebraic Data Types
 
 sealed class FunctionWorkerMessage {
-    data class StartOrRestartWork(val jobs: List<Pair<String, suspend () -> Job>>) : FunctionWorkerMessage()
-    data class StopWork(val key: String, val cause: Throwable?) : FunctionWorkerMessage()
+    data class StartOrRestartWork(val jobs: List<Work>) : FunctionWorkerMessage()
+    data class StopWork(val name: JobName, val cause: Throwable?) : FunctionWorkerMessage()
 }
 
 //endregion Algebraic Data Types
@@ -58,9 +68,12 @@ fun <A : Action,
         initialInterpreterState: Option<IS> = None,
         initialProcessorState: Option<PS> = None,
         initialReducerState: Option<RS> = None,
-        interpret: (command: C, processor: OptionalSendChannel<A>) -> State<Option<IS>, Option<A>>,
-        process: (action: A, reducer: OptionalSendChannel<R>) -> State<Option<PS>, Option<R>>,
-        reduce: (result: R, stateChannel: OptionalSendChannel<RS>) -> State<Option<RS>, Option<RS>>,
+        interpret: (command: C, processor: SendChannel<A>) ->
+        State<Option<IS>, Option<IS>>,
+        process: (action: A, reducer: SendChannel<R>) ->
+        State<Option<PS>, Option<PS>>,
+        reduce: (result: R, stateChannel: SendChannel<RS>) ->
+        State<Option<RS>, Option<RS>>,
         backgroundContext: CoroutineContext = CommonPool,
         parent: Job = Job()
 ) = object : Bow<A, R, C, RS> {
@@ -73,27 +86,27 @@ fun <A : Action,
                     context = backgroundContext,
                     capacity = Channel.UNLIMITED,
                     parent = parent,
-                    returnChannel = stateChannel.some(),
+                    returnChannel = stateChannel,
                     initialInternalState = initialReducerState,
-                    handle = reduce)
+                    reduceState = reduce)
 
     private val processor: SendChannel<A> =
             pipelineActor(
                     context = backgroundContext,
                     capacity = Channel.UNLIMITED,
                     parent = parent,
-                    returnChannel = Some(reducer),
+                    returnChannel = reducer,
                     initialInternalState = initialProcessorState,
-                    handle = process)
+                    reduceState = process)
 
     private val interpreter: SendChannel<C> =
             pipelineActor(
                     context = backgroundContext,
                     capacity = Channel.UNLIMITED,
                     parent = parent,
-                    returnChannel = Some(processor),
+                    returnChannel = processor,
                     initialInternalState = initialInterpreterState,
-                    handle = interpret)
+                    reduceState = interpret)
 
     override fun commandChannel(): SendChannel<C> =
             interpreter
@@ -107,7 +120,6 @@ fun <A : Action,
     override fun stateChannel(): ReceiveChannel<RS> =
             stateChannel
 }
-
 
 fun functionWorker(
         parentJob: Job = Job(),
@@ -126,13 +138,13 @@ fun functionWorker(
         }
 
         is FunctionWorkerMessage.StopWork -> {
-            workMap[msg.key]?.second?.cancel()
+            workMap[msg.name]?.second?.cancel()
         }
     }
 }
 
 suspend fun FunctionWorker.startOrRestartWork(
-        jobs: List<Pair<String, suspend () -> Job>>
+        jobs: List<Work>
 ): Unit = send(FunctionWorkerMessage.StartOrRestartWork(jobs))
 
 
@@ -145,8 +157,8 @@ fun <D, IS, R> pipelineActor(
         capacity: Int = 0,
         parent: Job = Job(),
         initialInternalState: Option<IS>,
-        returnChannel: OptionalSendChannel<R>,
-        handle: (dep: D, OptionalSendChannel<R>) -> State<Option<IS>, Option<R>>
+        returnChannel: SendChannel<R>,
+        reduceState: (dep: D, SendChannel<R>) -> State<Option<IS>, Option<IS>>
 ): SendChannel<D> =
         actor(
                 context = context,
@@ -155,23 +167,17 @@ fun <D, IS, R> pipelineActor(
         ) {
             var internalState: Option<IS> = initialInternalState
             for (dep in channel) {
-                with(handle(dep, returnChannel).run(internalState)) {
-                    internalState = a
-                    b.map { r ->
-                        returnChannel.map { rc ->
-                            launch(context) {
-                                rc.send(r)
-                            }
-                        }
-                    }
-                }
+                internalState = reduceState(dep, returnChannel).runA(internalState)
             }
         }
 
 //endregion Functions
 
-//region extensions
+//region extension Functions
 
 fun <A> A.toId() = Id.just(this)
 
-//endregion extensions
+infix fun JobName.to(that: suspend () -> Job): Work = Work(this, that)
+
+
+//endregion extension Functions

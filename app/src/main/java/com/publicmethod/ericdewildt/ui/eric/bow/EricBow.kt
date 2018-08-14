@@ -7,8 +7,8 @@ import com.publicmethod.ericdewildt.threading.ContextProvider
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.interpretEricCommands
-import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.ericProcessor
+import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.interpretEricCommand
+import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.processEricAction
 import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.ericReducer
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricInterpreterState
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricProcessorState
@@ -28,13 +28,13 @@ class EricBow(contextProvider: ContextProvider = ContextProvider())
             initialInterpreterState = Some(EricInterpreterState()),
             initialProcessorState = Some(EricProcessorState()),
             initialReducerState = Some(EricState()),
-            interpret = ::interpretEricCommands,
+            interpret = ::interpretEricCommand,
             process =
             Job(),
             contextProvider::backgroundContext,
             ::ericReducer,
-            ::ericProcessor,
-            ::interpretEricCommands
+            ::processEricAction,
+            ::interpretEricCommand
     )
 
 }

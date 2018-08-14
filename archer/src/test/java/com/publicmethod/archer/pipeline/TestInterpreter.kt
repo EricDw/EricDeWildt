@@ -1,38 +1,52 @@
 package com.publicmethod.archer.pipeline
 
-import arrow.core.*
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.toT
 import arrow.data.State
 import com.publicmethod.archer.INTERPRETED_LEFT
 import com.publicmethod.archer.INTERPRETED_RIGHT
 import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestCommand
-import com.publicmethod.archer.states.TestInterpreterStateData
+import com.publicmethod.archer.states.TestInterpreterState
+import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.launch
 
 fun interpretTestCommand(
         command: TestCommand,
-        processor: Option<SendChannel<TestAction>>
-): State<Option<TestInterpreterStateData>, Option<TestAction>> =
-        State { internalState ->
-            when (command) {
-                TestCommand.RightCommand ->
-                    interpretRight(internalState)
+        processor: SendChannel<TestAction>
+): State<Option<TestInterpreterState>, Option<TestInterpreterState>> =
+        State { interpreterState ->
+            interpreterState.fold({
+                None toT None
+            }, { state ->
+                return@State with(when (command) {
+                    TestCommand.RightCommand ->
+                        interpretRight(
+                                state
+                        )
 
-                TestCommand.LeftCommand ->
-                    interpretLeft(internalState)
-            }
+                    TestCommand.LeftCommand ->
+                        interpretLeft(
+                                state
+                        )
+                }) {
+                    launch(Unconfined) {
+                        processor.send(second)
+                    }
+                    Some(first) toT Some(first)
+                }
+            })
         }
 
-private fun interpretLeft(internalState: Option<TestInterpreterStateData>) =
-        internalState.fold({
-            None toT TestAction.LeftAction.some()
-        }, { inState ->
-            Some(inState.copy(text = INTERPRETED_LEFT)) toT TestAction.LeftAction.some()
-        })
+private fun interpretLeft(
+        interpreterState: TestInterpreterState
+): Pair<TestInterpreterState, TestAction.LeftAction> =
+        interpreterState.copy(text = INTERPRETED_LEFT) to TestAction.LeftAction
 
-private fun interpretRight(internalState: Option<TestInterpreterStateData>) =
-        internalState.fold({
-            None toT TestAction.RightAction.some()
-        }, { inState ->
-            Some(inState.copy(text = INTERPRETED_RIGHT)) toT TestAction.RightAction.some()
-        })
+private fun interpretRight(
+        interpreterState: TestInterpreterState
+): Pair<TestInterpreterState, TestAction.RightAction> =
+        interpreterState.copy(text = INTERPRETED_RIGHT) to TestAction.RightAction
