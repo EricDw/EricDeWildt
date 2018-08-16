@@ -15,8 +15,8 @@ import com.publicmethod.archer.whenClicking
 import com.publicmethod.ericdewildt.R
 import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.extensions.getViewModel
-import com.publicmethod.ericdewildt.scopes.Scopes
-import com.publicmethod.ericdewildt.scopes.Scopes.getEricScope
+import com.publicmethod.ericdewildt.scopes.GetEricScope
+import com.publicmethod.ericdewildt.scopes.getEricScope
 import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
@@ -31,13 +31,25 @@ class EricFragment : Fragment() {
         fun newInstance() = EricFragment()
     }
 
+//    private val viewAdapter: ItemAdapter by lazy {
+//        ItemAdapter()
+//    }
+
+//    private val recyclerView: RecyclerView by lazy {
+//        recycler.apply {
+//            layoutManager = LinearLayoutManager(context)
+//            setHasFixedSize(true)
+//            adapter = viewAdapter
+//        }
+//    }
+
     private val commandActor = actor<EricCommand>(CommonPool) {
         for (command in channel) {
             viewModel.send(command)
         }
     }
 
-    private val ericScope: Option<Scopes.GetEricScope> by lazy {
+    private val ericScope: Option<GetEricScope> by lazy {
         Option.fromNullable(context).flatMap { ctx ->
             getEricScope(ctx)
         }
@@ -72,10 +84,11 @@ class EricFragment : Fragment() {
             })
         }
 
+
         whenClicking(fabButton) {
             EricCommand.EmailEricCommand
-        } then {
-            commandActor.offer(it)
+        } then { command ->
+            commandActor.offer(command)
         }
 
     }
@@ -142,12 +155,26 @@ class EricFragment : Fragment() {
         showProfileViews()
         textView_fullName.text = eric.fullName
         textView_description.text = eric.description
+//        viewAdapter.updateItems(eric.skills)
+        context?.apply {
+            fabButton.setImageDrawable(getDrawable(R.drawable.ic_email_accent_24dp))
+            fabButton.setOnClickListener {
+                commandActor.offer(EricCommand.EmailEricCommand)
+            }
+        }
     }
 
     private fun renderShowErrorState() {
         hideProfileViews()
         showStatusViews()
+        progressBar.visibility = GONE
         status_message.text = getString(R.string.error_message_eric_not_found)
+        context?.apply {
+            fabButton.setImageDrawable(getDrawable(R.drawable.ic_refresh_accent_24dp))
+            fabButton.setOnClickListener {
+                issueInitializeCommand()
+            }
+        }
     }
 
     private fun showProfileViews() {
@@ -155,7 +182,7 @@ class EricFragment : Fragment() {
         textView_fullName.visibility = VISIBLE
         textView_description_title.visibility = VISIBLE
         textView_description.visibility = VISIBLE
-        recyclerView.visibility = VISIBLE
+//        recyclerView.visibility = VISIBLE
     }
 
     private fun hideProfileViews() {
@@ -163,7 +190,7 @@ class EricFragment : Fragment() {
         textView_fullName.visibility = GONE
         textView_description_title.visibility = GONE
         textView_description.visibility = GONE
-        recyclerView.visibility = VISIBLE
+//        recyclerView.visibility = GONE
     }
 
     private fun showStatusViews() {

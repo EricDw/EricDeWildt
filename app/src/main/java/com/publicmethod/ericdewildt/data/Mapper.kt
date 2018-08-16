@@ -4,25 +4,46 @@ import com.publicmethod.ericdewildt.cache.CachedEric
 import com.publicmethod.ericdewildt.remote.EricDTO
 
 fun EricDTO.mapToEric(): Eric =
-        Eric(this.firstName,
-                this.lastName,
-                this.fullName,
-                this.description,
-                this.yearsOfExperience,
-                this.skills)
+    Eric(
+        firstName = this.firstName,
+        lastName = this.lastName,
+        fullName = this.fullName,
+        emailAddress = this.emailAddress,
+        linkedInURL = this.linkedInURL,
+        websiteURL = this.websiteURL,
+        twitter = this.twitter,
+        gitHubURL = this.gitHubURL,
+        description = this.description,
+        yearsOfExperience = this.yearsOfExperience,
+        skills = this.skills
+    )
 
 fun EricDTO.mapToCachedEric(): CachedEric =
-        CachedEric(firstName = this.firstName,
-                lastName = this.lastName,
-                fullName = this.fullName,
-                description = this.description,
-                yearsOfExperience = this.yearsOfExperience,
-                skills = this.skills)
+    CachedEric(
+        firstName = this.firstName,
+        lastName = this.lastName,
+        fullName = this.fullName,
+        description = this.description,
+        yearsOfExperience = this.yearsOfExperience,
+        emailAddress = this.emailAddress,
+        linkedInURL = this.linkedInURL,
+        websiteURL = this.websiteURL,
+        twitter = this.twitter,
+        gitHubURL = this.gitHubURL,
+        skills = this.skills
+    )
 
 fun CachedEric.mapToEric(): Eric =
-        Eric(this.firstName,
-                this.lastName,
-                this.fullName,
-                this.description,
-                this.yearsOfExperience,
-                this.skills)
+    Eric(
+        firstName = this.firstName,
+        lastName = this.lastName,
+        fullName = this.fullName,
+        emailAddress = this.emailAddress,
+        linkedInURL = this.linkedInURL,
+        websiteURL = this.websiteURL,
+        twitter = this.twitter,
+        gitHubURL = this.gitHubURL,
+        description = this.description,
+        yearsOfExperience = this.yearsOfExperience,
+        skills = this.skills
+    )
