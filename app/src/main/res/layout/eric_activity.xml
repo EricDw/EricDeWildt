@@ -19,6 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:theme="@style/EricBottomAppBarThemeOverlay"
         app:backgroundTint="@color/colorPrimaryDark"
         app:fabCradleRoundedCornerRadius="0dp"
         app:navigationIcon="@drawable/ic_menu_white_24dp">
@@ -32,7 +33,7 @@
         android:layout_height="wrap_content"
         android:src="@drawable/ic_email_accent_24dp"
         android:theme="@style/Widget.MaterialComponents.FloatingActionButton"
-        app:backgroundTint="@color/colorPrimary"
+        app:backgroundTint="@color/colorAccent"
         android:elevation="6dp"
         app:fabSize="normal"
         app:layout_anchor="@id/bottom_appbar" />
