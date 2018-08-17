@@ -31,10 +31,10 @@
         style="@style/Widget.MaterialComponents.FloatingActionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:elevation="6dp"
         android:src="@drawable/ic_email_accent_24dp"
         android:theme="@style/Widget.MaterialComponents.FloatingActionButton"
         app:backgroundTint="@color/colorAccent"
-        android:elevation="6dp"
         app:fabSize="normal"
         app:layout_anchor="@id/bottom_appbar" />
 
