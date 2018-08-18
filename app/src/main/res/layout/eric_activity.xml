@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".ui.eric.EricActivity" />
-
+refres
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottom_appbar"
         style="@style/Widget.MaterialComponents.BottomAppBar"
@@ -22,6 +22,7 @@
         android:theme="@style/EricBottomAppBarThemeOverlay"
         app:backgroundTint="@color/colorPrimaryDark"
         app:fabCradleRoundedCornerRadius="0dp"
+        app:hideOnScroll="true"
         app:navigationIcon="@drawable/ic_menu_white_24dp">
 
     </com.google.android.material.bottomappbar.BottomAppBar>
@@ -31,7 +32,6 @@
         style="@style/Widget.MaterialComponents.FloatingActionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:elevation="6dp"
         android:src="@drawable/ic_email_accent_24dp"
         android:theme="@style/Widget.MaterialComponents.FloatingActionButton"
         app:backgroundTint="@color/colorAccent"

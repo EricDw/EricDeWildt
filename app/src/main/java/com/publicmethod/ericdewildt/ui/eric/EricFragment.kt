@@ -1,5 +1,6 @@
 package com.publicmethod.ericdewildt.ui.eric
 
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.view.View.GONE
@@ -85,6 +86,20 @@ class EricFragment : Fragment() {
                 "Emailing Eric StateData",
                 Snackbar.LENGTH_INDEFINITE
             )
+            val listener = View.OnScrollChangeListener { _, x, y, _, _ ->
+                when (y < 0) {
+                    true -> {
+                        fabButton.show()
+                    }
+                    else -> {
+                        fabButton.hide()
+                    }
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                scrollView.setOnScrollChangeListener(listener)
+            }
 
             fabButton.setOnClickListener {
                 commandActor.offer(EricCommand.EmailEricCommand)
