@@ -90,7 +90,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
 
 //    Coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.24.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
 
 //    Testing
     implementation 'com.github.EricDw:TestingUtilsExample:v0.0.2-alpha'

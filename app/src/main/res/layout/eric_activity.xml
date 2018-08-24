@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:theme="@style/Widget.MaterialComponents.BottomAppBar"
+        android:theme="@style/EricBottomAppBarThemeOverlay"
         app:backgroundTint="@color/colorPrimaryDark"
         app:fabCradleRoundedCornerRadius="0dp"
         app:hideOnScroll="true"

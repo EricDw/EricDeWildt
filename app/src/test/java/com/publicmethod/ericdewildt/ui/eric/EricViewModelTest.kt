@@ -31,29 +31,28 @@ class EricViewModelTest {
     @Before
     fun setUp() {
         viewModel = EricViewModel(
-            TestContextProvider().backgroundContext()
+            Unconfined
         )
         viewModel.state.observeForever { state = it }
     }
 
     @Test
-    fun given_Right_InitializeCommand_return_Some_Eric() =
-        runBlocking(Unconfined) {
-            // Arrange
-            val input = InitializeCommand(GetEricScope(TestRightEricRepository()))
-            val expectedOutput = true
+    fun given_Right_InitializeCommand_return_Some_Eric() = runBlocking(Unconfined) {
+        // Arrange
+        val input = InitializeCommand(GetEricScope(TestRightEricRepository()))
+        val expectedOutput = true
 
-            // Act
-            viewModel.send(input)
-            delay(100)
-            val actualOutput = state.eric is Some
-            // Assert
-            assertTrueWithMessage(
-                input = input,
-                expectedOutput = expectedOutput,
-                actualOutput = actualOutput
-            )
-        }
+        // Act
+        viewModel.send(input)
+        delay(100)
+        val actualOutput = state.eric is Some
+        // Assert
+        assertTrueWithMessage(
+            input = input,
+            expectedOutput = expectedOutput,
+            actualOutput = actualOutput
+        )
+    }
 
     @Test
     fun given_Left_InitializeCommand_return_None_Eric() =
