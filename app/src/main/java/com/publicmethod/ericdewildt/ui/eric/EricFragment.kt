@@ -31,18 +31,6 @@ class EricFragment : Fragment() {
         fun newInstance() = EricFragment()
     }
 
-//    private val viewAdapter: ItemAdapter by lazy {
-//        ItemAdapter()
-//    }
-
-//    private val recyclerView: RecyclerView by lazy {
-//        recycler.apply {
-//            layoutManager = LinearLayoutManager(context)
-//            setHasFixedSize(true)
-//            adapter = viewAdapter
-//        }
-//    }
-
     private val commandActor = actor<EricCommand>(CommonPool) {
         for (command in channel) {
             viewModel.send(command)
@@ -98,7 +86,13 @@ class EricFragment : Fragment() {
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                scrollView.setOnScrollChangeListener(listener)
+//                scrollView.setOnScrollChangeListener(listener)
+//                navigationBar.setOnSystemUiVisibilityChangeListener {
+//                    when (it == INVISIBLE) {
+//                        true -> fabButton.hide()
+//                        false -> fabButton.show()
+//                    }
+//                }
             }
 
             fabButton.setOnClickListener {

@@ -12,14 +12,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".ui.eric.EricActivity" />
-refres
+
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottom_appbar"
         style="@style/Widget.MaterialComponents.BottomAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:theme="@style/EricBottomAppBarThemeOverlay"
+        android:theme="@style/Widget.MaterialComponents.BottomAppBar"
         app:backgroundTint="@color/colorPrimaryDark"
         app:fabCradleRoundedCornerRadius="0dp"
         app:hideOnScroll="true"

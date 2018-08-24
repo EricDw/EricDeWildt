@@ -15,9 +15,8 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 //region aliases
 
-typealias FunctionWorker = SendChannel<FunctionWorkerMessage>
+typealias FunctionWorker = SendChannel<FunctionWork>
 
-typealias OptionalSendChannel<T> = Option<SendChannel<T>>
 typealias JobName = String
 
 //endregion aliases
@@ -30,9 +29,9 @@ data class Work(val name: JobName, val jobFunction: suspend () -> Job)
 
 //region Algebraic Data Types
 
-sealed class FunctionWorkerMessage {
-    data class StartOrRestartWork(val jobs: List<Work>) : FunctionWorkerMessage()
-    data class StopWork(val name: JobName, val cause: Option<Throwable>) : FunctionWorkerMessage()
+sealed class FunctionWork {
+    data class StartOrRestartWork(val jobs: List<Work>) : FunctionWork()
+    data class StopWork(val name: JobName, val cause: Option<Throwable>) : FunctionWork()
 }
 
 //endregion Algebraic Data Types
@@ -53,6 +52,7 @@ interface Bow<
     fun processorChannel(): SendChannel<A>
     fun reducerChannel(): SendChannel<R>
     fun stateChannel(): ReceiveChannel<S>
+    fun close()
 }
 
 //endregion Interfaces
@@ -82,7 +82,7 @@ fun <A : Action,
         Channel(Channel.UNLIMITED)
 
     private val reducer: SendChannel<R> =
-        pipelineActor(
+        activeActor(
             context = backgroundContext,
             capacity = Channel.UNLIMITED,
             parent = parent,
@@ -92,7 +92,7 @@ fun <A : Action,
         )
 
     private val processor: SendChannel<A> =
-        pipelineActor(
+        activeActor(
             context = backgroundContext,
             capacity = Channel.UNLIMITED,
             parent = parent,
@@ -102,7 +102,7 @@ fun <A : Action,
         )
 
     private val interpreter: SendChannel<C> =
-        pipelineActor(
+        activeActor(
             context = backgroundContext,
             capacity = Channel.UNLIMITED,
             parent = parent,
@@ -122,9 +122,16 @@ fun <A : Action,
 
     override fun stateChannel(): ReceiveChannel<RS> =
         stateChannel
+
+    override fun close() {
+        stateChannel.close()
+        reducer.close()
+        processor.close()
+        interpreter.close()
+    }
 }
 
-fun <D, IS, R> pipelineActor(
+fun <D, IS, R> activeActor(
     context: CoroutineContext = CommonPool,
     capacity: Int = 0,
     parent: Job = Job(),
@@ -146,7 +153,7 @@ fun <D, IS, R> pipelineActor(
 fun functionWorker(
     parentJob: Job = Job(),
     backgroundContext: CoroutineContext = CommonPool
-) = actor<FunctionWorkerMessage>(
+) = actor<FunctionWork>(
     parent = parentJob,
     context = backgroundContext
 ) {
@@ -154,13 +161,13 @@ fun functionWorker(
     val workMap: MutableMap<String, Pair<suspend () -> Job, Job>> = mutableMapOf()
 
     for (msg in channel) when (msg) {
-        is FunctionWorkerMessage.StartOrRestartWork -> {
+        is FunctionWork.StartOrRestartWork -> {
             for ((key, function) in msg.jobs) {
                 workMap[key] = function to function()
             }
         }
 
-        is FunctionWorkerMessage.StopWork -> {
+        is FunctionWork.StopWork -> {
             workMap[msg.name]?.second?.cancel(
                 msg.cause.orNull()
             )
@@ -170,11 +177,11 @@ fun functionWorker(
 
 suspend fun FunctionWorker.startOrRestartWork(
     jobs: List<Work>
-): Unit = send(FunctionWorkerMessage.StartOrRestartWork(jobs))
+): Unit = send(FunctionWork.StartOrRestartWork(jobs))
 
 suspend fun FunctionWorker.stopWork(
     key: String, cause: Option<Throwable>
-): Unit = send(FunctionWorkerMessage.StopWork(key, cause))
+): Unit = send(FunctionWork.StopWork(key, cause))
 
 //endregion Functions
 

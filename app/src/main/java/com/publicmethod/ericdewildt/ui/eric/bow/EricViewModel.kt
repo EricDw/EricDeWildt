@@ -17,7 +17,6 @@ import com.publicmethod.ericdewildt.ui.eric.bow.states.EricInterpreterState
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricProcessorState
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.produce
 import kotlin.coroutines.experimental.CoroutineContext
@@ -25,7 +24,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 class EricViewModel(
     backgroundContext: CoroutineContext =
         ContextProvider().backgroundContext(),
-    parentJob: Job =
+    private val parentJob: Job =
         Job(),
     private val bow: Bow<EricAction, EricResult, EricCommand, EricState> =
         bow(
@@ -47,17 +46,25 @@ class EricViewModel(
             parentJob
         )
 ) : ViewModel(),
-    SendChannel<EricCommand> by bow.commandChannel(),
-    ReceiveChannel<EricState> by bow.stateChannel() {
+    SendChannel<EricCommand> by bow.commandChannel() {
 
     private val mutableStateLiveData: MutableLiveData<EricState> = MutableLiveData()
 
     val state: LiveData<EricState>
         get() = mutableStateLiveData
 
-    private val router = produce<Unit>(context = backgroundContext) {
+    private val router = produce<Unit>(
+        context = backgroundContext,
+        parent = parentJob
+    ) {
         for (state in bow.stateChannel()) {
             mutableStateLiveData.postValue(state)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        bow.close()
+        parentJob.cancel()
     }
 }
