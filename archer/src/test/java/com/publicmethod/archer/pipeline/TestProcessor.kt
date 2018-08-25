@@ -14,53 +14,54 @@ import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.launch
 
 fun processTestAction(
-        action: TestAction,
-        reducer: SendChannel<TestResult>
+    action: TestAction,
+    reducer: SendChannel<TestResult>
 ): State<Option<TestProcessorState>, Option<TestProcessorState>> =
-        State { processorState ->
-            processorState.fold({
-                None toT None
-            }, { state ->
-                return@State with(when (action) {
+    State { processorState ->
+        processorState.fold({
+            None toT None
+        }, { state ->
+            return@State with(
+                when (action) {
 
                     is TestAction.RightAction ->
                         processRight(
-                                state
+                            state
                         )
 
                     is TestAction.LeftAction ->
                         processLeft(
-                                state
+                            state
                         )
 
                     is TestAction.WorkerAction ->
                         processWorker(
-                                state,
-                                reducer
+                            state,
+                            reducer
                         )
-
-                }) {
-                    launch(Unconfined) {
-                        reducer.send(second)
-                    }
-                    Some(first) toT Some(first)
                 }
-            })
-        }
+            ) {
+                launch(Unconfined) {
+                    reducer.send(second)
+                }
+                Some(first) toT Some(first)
+            }
+        })
+    }
 
 fun processRight(
-        processorState: TestProcessorState
+    processorState: TestProcessorState
 ): Pair<TestProcessorState, TestResult> =
-        processorState.copy(text = PROCESSED_RIGHT) to TestResult.RightResult
+    processorState.copy(text = PROCESSED_RIGHT) to TestResult.RightResult
 
 fun processLeft(
-        processorState: TestProcessorState
+    processorState: TestProcessorState
 ): Pair<TestProcessorState, TestResult> =
-        processorState.copy(text = PROCESSED_LEFT) to TestResult.LeftResult
+    processorState.copy(text = PROCESSED_LEFT) to TestResult.LeftResult
 
 fun processWorker(
-        processorState: TestProcessorState,
-        returnChannel: SendChannel<TestResult>
+    processorState: TestProcessorState,
+    returnChannel: SendChannel<TestResult>
 ): Pair<TestProcessorState, TestResult> {
     launch(Unconfined) {
         val work: Work = WORKER_KEY to suspend {
@@ -69,7 +70,7 @@ fun processWorker(
             }
         }
         processorState.worker.startOrRestartWork(
-                listOf(work)
+            listOf(work)
         )
     }
     return processorState.copy(text = PROCESSED_RIGHT) to TestResult.RightResult

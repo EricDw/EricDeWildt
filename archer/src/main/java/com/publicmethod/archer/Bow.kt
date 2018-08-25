@@ -1,10 +1,7 @@
 package com.publicmethod.archer
 
 import arrow.core.*
-import arrow.data.Reader
-import arrow.data.State
-import arrow.data.runA
-import arrow.data.runId
+import arrow.data.*
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
@@ -53,6 +50,11 @@ interface Bow<
     fun reducerChannel(): SendChannel<R>
     fun stateChannel(): ReceiveChannel<S>
     fun close()
+}
+
+interface Archer<C : Command, S : StateData> {
+    fun commandChannel(): SendChannel<C>
+    fun stateChannel(): ReceiveChannel<S>
 }
 
 //endregion Interfaces
@@ -156,9 +158,9 @@ fun <C : Command, S : StateData> bow2(
     parent: Job = Job(),
     initialState: Option<S> = None,
     stateChannel: SendChannel<Option<S>>,
-    reader: Reader<Tuple2<Option<C>, SendChannel<Option<C>>>,
+    reader: Reader<Tuple2<C, SendChannel<C>>,
             State<Option<S>, Option<S>>>
-): SendChannel<Option<C>> =
+): SendChannel<C> =
     actor(
         context = context,
         capacity = capacity,
@@ -174,6 +176,81 @@ fun <C : Command, S : StateData> bow2(
                             stateChannel.send(it)
                         }
         }
+    }
+
+fun <D, R> runner(
+    context: CoroutineContext = CommonPool,
+    capacity: Int = 0,
+    parent: Job = Job(),
+    returnChannel: SendChannel<R>,
+    reader: Reader<Tuple2<D, SendChannel<R>>, Option<R>>
+): SendChannel<D> =
+    actor(
+        context = context,
+        capacity = capacity,
+        parent = parent
+    ) {
+        for (a in channel) {
+            reader.runId(a toT returnChannel).also { option ->
+                option.fold({}, {
+                    returnChannel.send(it)
+                })
+            }
+        }
+    }
+
+fun <A : Action,
+        R : Result,
+        C : Command,
+        S : StateData> archer(
+    context: CoroutineContext = CommonPool,
+    parentJob: Job = Job(),
+    initialState: Option<S> = None,
+    interpret: Reader<Tuple2<C, SendChannel<A>>, Option<A>>,
+    process: Reader<Tuple2<A, SendChannel<R>>, Option<R>>,
+    reduce: Reader<Tuple2<R, SendChannel<S>>, State<Option<S>, Option<S>>>
+): Archer<C, S> =
+    object : Archer<C, S> {
+
+        private var state = initialState
+
+        val stateChannel = Channel<S>()
+
+        val reducer: SendChannel<R> =
+            runner(
+                context,
+                Channel.UNLIMITED,
+                parentJob,
+                stateChannel,
+                reader = reduce.map(Id.functor()) {
+                    state = it.runA(state)
+                    state
+                }
+            )
+
+        val processor: SendChannel<A> =
+            runner(
+                context,
+                Channel.UNLIMITED,
+                parentJob,
+                reducer,
+                process
+            )
+
+        val interpreter: SendChannel<C> =
+            runner(
+                context,
+                Channel.UNLIMITED,
+                parentJob,
+                processor,
+                interpret
+            )
+
+        override fun commandChannel(): SendChannel<C> =
+            interpreter
+
+        override fun stateChannel(): ReceiveChannel<S> =
+            stateChannel
     }
 
 fun functionWorker(
