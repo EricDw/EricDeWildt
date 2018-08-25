@@ -1,7 +1,10 @@
 package com.publicmethod.archer
 
 import arrow.core.*
-import arrow.data.*
+import arrow.data.Reader
+import arrow.data.State
+import arrow.data.runA
+import arrow.data.runId
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
@@ -13,9 +16,12 @@ import kotlin.coroutines.experimental.CoroutineContext
 //region aliases
 
 typealias FunctionWorker = SendChannel<FunctionWork>
+typealias CommandChannel<T> = SendChannel<T>
+typealias StateChannel<T> = ReceiveChannel<T>
+typealias ActionChannel<T> = SendChannel<T>
+typealias ResultChannel<T> = SendChannel<T>
 
 typealias JobName = String
-
 //endregion aliases
 
 //region Data Classes
@@ -52,9 +58,11 @@ interface Bow<
     fun close()
 }
 
+
 interface Archer<C : Command, S : StateData> {
-    fun commandChannel(): SendChannel<C>
-    fun stateChannel(): ReceiveChannel<S>
+    fun commandChannel(): CommandChannel<C>
+    fun stateChannel(): StateChannel<S>
+    fun close()
 }
 
 //endregion Interfaces
@@ -199,6 +207,28 @@ fun <D, R> runner(
         }
     }
 
+/**
+ * Essentially just an [actor]  housing
+ * an entire MVI framework but exposing only the
+ * [CommandChannel] of [C] and the
+ * [StateChannel] of [S] parts.
+ *
+ *
+ * @param [interpret] A [Reader] of [Tuple2] of ([C] and
+ * [SendChannel] of [A]), this is where the mapping
+ * of [Command] to [Action] will take place.
+ *
+ * @param [process] A [Reader] of [Tuple2] of ([A] and
+ * [SendChannel] of [R]), this is where the mapping
+ * of [Action] to [Result] will take place.
+ *
+ * @param [reduce] A [Reader] of [Tuple2] of ([R] and
+ * [SendChannel] of [S]), this is where the mapping
+ * of [Result] to [StateData] will take place.
+ *
+ *
+ * @return An anonymous object implementing the [Archer] interface.
+ */
 fun <A : Action,
         R : Result,
         C : Command,
@@ -206,52 +236,58 @@ fun <A : Action,
     context: CoroutineContext = CommonPool,
     parentJob: Job = Job(),
     initialState: Option<S> = None,
-    interpret: Reader<Tuple2<C, SendChannel<A>>, Option<A>>,
-    process: Reader<Tuple2<A, SendChannel<R>>, Option<R>>,
+    interpret: Reader<Tuple2<C, ActionChannel<A>>, Option<A>>,
+    process: Reader<Tuple2<A, ResultChannel<R>>, Option<R>>,
     reduce: Reader<Tuple2<R, SendChannel<S>>, State<Option<S>, Option<S>>>
-): Archer<C, S> =
-    object : Archer<C, S> {
+): Archer<C, S> = object : Archer<C, S> {
 
-        private var state = initialState
+    private var state = initialState
 
-        val stateChannel = Channel<S>()
+    val stateChannel = Channel<S>(Channel.UNLIMITED)
 
-        val reducer: SendChannel<R> =
-            runner(
-                context,
-                Channel.UNLIMITED,
-                parentJob,
-                stateChannel,
-                reader = reduce.map(Id.functor()) {
-                    state = it.runA(state)
-                    state
-                }
-            )
+    val reducer: SendChannel<R> =
+        runner(
+            context,
+            Channel.UNLIMITED,
+            parentJob,
+            stateChannel,
+            reader = reduce.map(Id.functor()) {
+                state = it.runA(state)
+                state
+            }
+        )
 
-        val processor: SendChannel<A> =
-            runner(
-                context,
-                Channel.UNLIMITED,
-                parentJob,
-                reducer,
-                process
-            )
+    val processor: SendChannel<A> =
+        runner(
+            context,
+            Channel.UNLIMITED,
+            parentJob,
+            reducer,
+            process
+        )
 
-        val interpreter: SendChannel<C> =
-            runner(
-                context,
-                Channel.UNLIMITED,
-                parentJob,
-                processor,
-                interpret
-            )
+    val interpreter: SendChannel<C> =
+        runner(
+            context,
+            Channel.UNLIMITED,
+            parentJob,
+            processor,
+            interpret
+        )
 
-        override fun commandChannel(): SendChannel<C> =
-            interpreter
+    override fun commandChannel(): SendChannel<C> =
+        interpreter
 
-        override fun stateChannel(): ReceiveChannel<S> =
-            stateChannel
+    override fun stateChannel(): ReceiveChannel<S> =
+        stateChannel
+
+    override fun close() {
+        stateChannel.close()
+        reducer.close()
+        processor.close()
+        interpreter.close()
     }
+}
 
 fun functionWorker(
     parentJob: Job = Job(),
