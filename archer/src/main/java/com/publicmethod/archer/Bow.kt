@@ -1,10 +1,10 @@
 package com.publicmethod.archer
 
-import arrow.core.Id
-import arrow.core.None
-import arrow.core.Option
+import arrow.core.*
+import arrow.data.Reader
 import arrow.data.State
 import arrow.data.runA
+import arrow.data.runId
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.Channel
@@ -147,6 +147,32 @@ fun <D, IS, R> activeActor(
         var internalState: Option<IS> = initialInternalState
         for (dep in channel) {
             internalState = reduceState(dep, returnChannel).runA(internalState)
+        }
+    }
+
+fun <C : Command, S : StateData> bow2(
+    context: CoroutineContext = CommonPool,
+    capacity: Int = 0,
+    parent: Job = Job(),
+    initialState: Option<S> = None,
+    stateChannel: SendChannel<Option<S>>,
+    reader: Reader<Tuple2<Option<C>, SendChannel<Option<C>>>,
+            State<Option<S>, Option<S>>>
+): SendChannel<Option<C>> =
+    actor(
+        context = context,
+        capacity = capacity,
+        parent = parent
+    ) {
+        var internalState: Option<S> = initialState
+        for (command in channel) {
+            internalState =
+                    reader
+                        .runId(command toT channel)
+                        .runA(internalState)
+                        .also {
+                            stateChannel.send(it)
+                        }
         }
     }
 
