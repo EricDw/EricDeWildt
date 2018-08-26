@@ -1,9 +1,8 @@
 package com.publicmethod.archer.pipeline
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
-import arrow.core.toT
+import arrow.core.*
+import arrow.data.Nel
+import arrow.data.Reader
 import arrow.data.State
 import com.publicmethod.archer.*
 import com.publicmethod.archer.algebras.TestAction
@@ -63,15 +62,25 @@ fun processWorker(
     processorState: TestProcessorState,
     returnChannel: SendChannel<TestResult>
 ): Pair<TestProcessorState, TestResult> {
-    launch(Unconfined) {
-        val work: Work = WORKER_KEY to suspend {
-            launch(Unconfined) {
-                returnChannel.send(TestResult.WorkerResult)
-            }
-        }
-        processorState.worker.startOrRestartWork(
-            listOf(work)
-        )
-    }
     return processorState.copy(text = PROCESSED_RIGHT) to TestResult.RightResult
 }
+
+fun testProcessor(): Reader<Tuple2<TestAction, ResultChannel<TestResult>>, Option<TestResult>> =
+    Reader { (action, returnChannel) ->
+        when (action) {
+            TestAction.RightAction -> Some(TestResult.RightResult)
+            TestAction.LeftAction -> Some(TestResult.LeftResult)
+            TestAction.WorkerAction -> {
+                val work: Work = WORK_KEY to suspend {
+                    launch(Unconfined) {
+                        returnChannel.send(TestResult.RightResult)
+                    }
+                }
+                Some(TestResult.WorkerResult(Some(Nel(work))))
+            }
+        }.toId()
+    }
+
+
+
+

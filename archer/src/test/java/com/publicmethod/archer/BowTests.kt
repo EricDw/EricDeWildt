@@ -71,7 +71,7 @@ class BowTests {
     fun given_TestCommand_Worker_receive_TestStateWorker() = runBlocking {
         //        Arrange
         val input = TestAction.WorkerAction
-        val expected = TestReducerState(REDUCED_WORKER)
+        val expected = TestReducerState(REDUCED_WORK)
 
 //        Act
         bow.processorChannel().send(input)
