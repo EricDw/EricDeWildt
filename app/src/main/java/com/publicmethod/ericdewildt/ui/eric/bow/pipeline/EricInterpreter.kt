@@ -1,65 +1,34 @@
 package com.publicmethod.ericdewildt.ui.eric.bow.pipeline
 
-import arrow.core.*
-import arrow.data.State
+import arrow.core.Option
+import arrow.core.Tuple2
+import arrow.core.some
+import arrow.data.Reader
+import com.publicmethod.archer.ActionChannel
+import com.publicmethod.archer.toId
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.EmailEricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.InitializeCommand
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricInterpreterState
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.launch
 
-fun interpretEricCommand(
-    command: EricCommand,
-    processor: SendChannel<EricAction>
-): State<Option<EricInterpreterState>, Option<EricInterpreterState>> =
-    State { optionState ->
-        return@State optionState.fold({
-            None toT None
-        }, { nonOptionState ->
-            with(
-                when (command) {
-                    is EricCommand.InitializeCommand ->
-                        interpretInitializeCommand(
-                            command,
-                            nonOptionState
-                        )
+fun interpretEricCommand(): Reader<Tuple2<EricCommand, ActionChannel<EricAction>>,
+        Option<EricAction>> = Reader { (command, _) ->
+    when (command) {
+        is EricCommand.InitializeCommand ->
+            interpretInitializeCommand(command)
 
-                    is EricCommand.EmailEricCommand ->
-                        interpretEmailEricCommand(nonOptionState)
+        is EmailEricCommand ->
+            interpretEmailEricCommand()
 
-                    is EricCommand.DismissSnackBarCommand ->
-                        interpretDismissSnackBarCommand(nonOptionState)
-                }
-            ) {
-
-                b.map { action ->
-                    launch {
-                        processor.send(action)
-                    }
-                }
-                Some(a) toT Some(a)
-            }
-        })
-    }
+        is EricCommand.DismissSnackBarCommand ->
+            interpretDismissSnackBarCommand()
+    }.some().toId()
+}
 
 private fun interpretInitializeCommand(
-    command: InitializeCommand,
-    ericState: EricInterpreterState
-): Tuple2<EricInterpreterState, Option<EricAction>> =
-    when (ericState.isInitialized) {
-        false -> ericState.copy(isInitialized = true) toT
-                Some(EricAction.InitializeAction(command.getEricScope))
-        true -> ericState toT None
-    }
+    command: InitializeCommand
+) = EricAction.InitializeAction(command.getEricScope)
 
-private fun interpretDismissSnackBarCommand(
-    interpreterState: EricInterpreterState
-): Tuple2<EricInterpreterState, Option<EricAction>> =
-    interpreterState toT Some(EricAction.DismissSnackBarAction)
+private fun interpretEmailEricCommand() = EricAction.EmailEricAction
 
-
-private fun interpretEmailEricCommand(
-    interpreterState: EricInterpreterState
-): Tuple2<EricInterpreterState, Option<EricAction>> =
-    interpreterState toT Some(EricAction.EmailEricAction)
+private fun interpretDismissSnackBarCommand() = EricAction.DismissSnackBarAction

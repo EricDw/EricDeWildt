@@ -3,9 +3,8 @@ package com.publicmethod.ericdewildt.ui.eric.bow
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import arrow.core.Some
-import com.publicmethod.archer.Bow
-import com.publicmethod.archer.bow
+import com.publicmethod.archer.Archer
+import com.publicmethod.archer.archer
 import com.publicmethod.ericdewildt.threading.ContextProvider
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
@@ -13,8 +12,6 @@ import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
 import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.interpretEricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.processEricAction
 import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.reduceEricResult
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricInterpreterState
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricProcessorState
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.SendChannel
@@ -26,27 +23,21 @@ class EricViewModel(
         ContextProvider().backgroundContext(),
     private val parentJob: Job =
         Job(),
-    private val bow: Bow<EricAction, EricResult, EricCommand, EricState> =
-        bow(
-            initialInterpreterState =
-            Some(EricInterpreterState()),
-            initialProcessorState =
-            Some(EricProcessorState(backgroundContext)),
-            initialReducerState =
-            Some(EricState(backgroundContext)),
-            interpret =
-            ::interpretEricCommand,
-            process =
-            ::processEricAction,
-            reduce =
-            ::reduceEricResult,
-            backgroundContext =
+    private val archer: Archer<EricCommand, EricState> =
+        archer<EricAction, EricResult, EricCommand, EricState>(
+            context =
             backgroundContext,
-            parent =
-            parentJob
+            parentJob =
+            parentJob,
+            interpret =
+            interpretEricCommand(),
+            process =
+            processEricAction(backgroundContext),
+            reduce =
+            reduceEricResult(backgroundContext)
         )
 ) : ViewModel(),
-    SendChannel<EricCommand> by bow.commandChannel() {
+    SendChannel<EricCommand> by archer.commandChannel() {
 
     private val mutableStateLiveData: MutableLiveData<EricState> = MutableLiveData()
 
@@ -57,14 +48,14 @@ class EricViewModel(
         context = backgroundContext,
         parent = parentJob
     ) {
-        for (state in bow.stateChannel()) {
+        for (state in archer.stateChannel()) {
             mutableStateLiveData.postValue(state)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        bow.close()
+        archer.close()
         parentJob.cancel()
     }
 }

@@ -6,14 +6,12 @@ import arrow.core.Some
 import com.publicmethod.ericdewildt.data.TestLeftEricRepository
 import com.publicmethod.ericdewildt.data.TestRightEricRepository
 import com.publicmethod.ericdewildt.scopes.GetEricScope
-import com.publicmethod.ericdewildt.threading.TestContextProvider
 import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.InitializeCommand
 import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
 import com.publicmethod.kotlintestingutils.assertTrueWithMessage
 import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -44,7 +42,6 @@ class EricViewModelTest {
 
         // Act
         viewModel.send(input)
-        delay(100)
         val actualOutput = state.eric is Some
         // Assert
         assertTrueWithMessage(
@@ -63,7 +60,6 @@ class EricViewModelTest {
 
             // Act
             viewModel.send(input)
-            delay(100)
             val actualOutput = state.eric
 
             // Assert
@@ -83,7 +79,6 @@ class EricViewModelTest {
 
             // Act
             viewModel.send(input)
-            delay(100)
             val actualOutput = state.showSnackBar
 
             // Assert
