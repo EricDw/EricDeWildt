@@ -1,6 +1,8 @@
 package com.publicmethod.ericdewildt.cache
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.Left
+import arrow.core.Right
 import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.data.Repository
 import com.publicmethod.ericdewildt.data.algebras.EricError

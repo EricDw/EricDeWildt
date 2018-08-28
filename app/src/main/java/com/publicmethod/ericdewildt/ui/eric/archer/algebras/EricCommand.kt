@@ -1,4 +1,4 @@
-package com.publicmethod.ericdewildt.ui.eric.bow.algebras
+package com.publicmethod.ericdewildt.ui.eric.archer.algebras
 
 import com.publicmethod.archer.Command
 import com.publicmethod.ericdewildt.scopes.GetEricScope

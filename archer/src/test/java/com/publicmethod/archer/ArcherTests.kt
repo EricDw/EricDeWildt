@@ -1,14 +1,10 @@
 package com.publicmethod.archer
 
 import arrow.core.Some
-import com.publicmethod.archer.algebras.TestAction
 import com.publicmethod.archer.algebras.TestCommand
-import com.publicmethod.archer.algebras.TestResult
-import com.publicmethod.archer.pipeline.interpretTestCommand
-import com.publicmethod.archer.pipeline.processTestAction
-import com.publicmethod.archer.pipeline.reduceTestResult
-import com.publicmethod.archer.states.TestInterpreterState
-import com.publicmethod.archer.states.TestProcessorState
+import com.publicmethod.archer.pipeline.testInterpreter
+import com.publicmethod.archer.pipeline.testProcessor
+import com.publicmethod.archer.pipeline.testReducer
 import com.publicmethod.archer.states.TestReducerState
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.Unconfined
@@ -17,23 +13,21 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 
-class BowTests {
+class ArcherTests {
 
-    private lateinit var bow: Bow<TestAction, TestResult, TestCommand, TestReducerState>
+    private lateinit var archer: Archer<TestCommand, TestReducerState>
     private lateinit var parent: Job
 
     @Before
     fun setUp() {
         parent = Job()
-        bow = bow(
-            Some(TestInterpreterState()),
-            Some(TestProcessorState(worker = functionWorker(parent, Unconfined))),
-            Some(TestReducerState()),
-            ::interpretTestCommand,
-            ::processTestAction,
-            ::reduceTestResult,
+        archer = archer(
             Unconfined,
-            parent
+            parent,
+            Some(TestReducerState()),
+            testInterpreter(),
+            testProcessor(),
+            testReducer()
         )
     }
 
@@ -44,8 +38,8 @@ class BowTests {
         val expected = TestReducerState(REDUCED_RIGHT)
 
 //        Act
-        bow.commandChannel().send(input)
-        val actual = bow.stateChannel().receive()
+        archer.commandChannel().send(input)
+        val actual = archer.stateChannel().receive()
 
 //        Assert
         Assert.assertEquals(expected, actual)
@@ -59,8 +53,8 @@ class BowTests {
         val expected = TestReducerState(REDUCED_LEFT)
 
 //        Act
-        bow.commandChannel().send(input)
-        val actual = bow.stateChannel().receive()
+        archer.commandChannel().send(input)
+        val actual = archer.stateChannel().receive()
 
 //        Assert
         Assert.assertEquals(expected, actual)
@@ -70,12 +64,12 @@ class BowTests {
     @Test
     fun given_TestCommand_Worker_receive_TestStateWorker() = runBlocking {
         //        Arrange
-        val input = TestAction.WorkerAction
-        val expected = TestReducerState(REDUCED_WORKER)
+        val input = TestCommand.WorkCommand
+        val expected = TestReducerState(REDUCED_WORK)
 
 //        Act
-        bow.processorChannel().send(input)
-        val actual = bow.stateChannel().receive()
+        archer.commandChannel().send(input)
+        val actual = archer.stateChannel().receive()
 
 //        Assert
         Assert.assertEquals(expected, actual)

@@ -1,9 +1,9 @@
 package com.publicmethod.ericdewildt.cache
 
+import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import android.content.Context
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.some
@@ -19,9 +19,10 @@ abstract class EricDataBase : RoomDatabase() {
         fun getInstance(context: Context): Option<EricDataBase> {
             if (INSTANCE === None) {
                 synchronized(EricDataBase::class) {
-                    INSTANCE = Room.databaseBuilder(context.applicationContext,
-                            EricDataBase::class.java, ericDatabaseName)
-                            .build().some()
+                    INSTANCE = Room.databaseBuilder(
+                        context.applicationContext,
+                        EricDataBase::class.java, ericDatabaseName
+                    ).build().some()
                 }
             }
             return INSTANCE

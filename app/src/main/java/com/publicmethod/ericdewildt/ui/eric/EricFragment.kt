@@ -1,25 +1,25 @@
 package com.publicmethod.ericdewildt.ui.eric
 
+import android.os.Build
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
+import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import arrow.core.Option
+import com.google.android.material.bottomappbar.BottomAppBar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.publicmethod.archer.whenClicking
 import com.publicmethod.ericdewildt.R
 import com.publicmethod.ericdewildt.data.Eric
 import com.publicmethod.ericdewildt.extensions.getViewModel
 import com.publicmethod.ericdewildt.scopes.GetEricScope
 import com.publicmethod.ericdewildt.scopes.getEricScope
-import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import com.publicmethod.ericdewildt.ui.eric.archer.EricViewModel
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.archer.states.EricState
+import kotlinx.android.synthetic.main.eric_activity.*
 import kotlinx.android.synthetic.main.eric_fragment.*
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.actor
@@ -30,18 +30,6 @@ class EricFragment : Fragment() {
     companion object {
         fun newInstance() = EricFragment()
     }
-
-//    private val viewAdapter: ItemAdapter by lazy {
-//        ItemAdapter()
-//    }
-
-//    private val recyclerView: RecyclerView by lazy {
-//        recycler.apply {
-//            layoutManager = LinearLayoutManager(context)
-//            setHasFixedSize(true)
-//            adapter = viewAdapter
-//        }
-//    }
 
     private val commandActor = actor<EricCommand>(CommonPool) {
         for (command in channel) {
@@ -59,11 +47,9 @@ class EricFragment : Fragment() {
         this.getViewModel<EricViewModel>()
     }
 
-    private val snackBar: Snackbar by lazy {
-        Snackbar.make(coordinator, "Emailing Eric StateData", Snackbar.LENGTH_INDEFINITE)
-    }
-
-    private val fabButton: FloatingActionButton by lazy { fab }
+    private lateinit var snackBar: Snackbar
+    private lateinit var fabButton: FloatingActionButton
+    private lateinit var navigationBar: BottomAppBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,24 +59,61 @@ class EricFragment : Fragment() {
         return inflater.inflate(R.layout.eric_fragment, container, false)
     }
 
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        with(viewModel) {
-            issueInitializeCommand()
-            state.value?.run { render(this) }
-            state.observe(this@EricFragment, Observer {
-                render(it)
-            })
+        activity?.apply {
+
+            fabButton = fab
+
+            navigationBar = bottom_appbar
+
+            snackBar = Snackbar.make(
+                activity_coordinator,
+                "Emailing Eric StateData",
+                Snackbar.LENGTH_INDEFINITE
+            )
+            val listener = View.OnScrollChangeListener { _, x, y, _, _ ->
+                when (y < 0) {
+                    true -> {
+                        fabButton.show()
+                    }
+                    else -> {
+                        fabButton.hide()
+                    }
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                scrollView.setOnScrollChangeListener(listener)
+//                navigationBar.setOnSystemUiVisibilityChangeListener {
+//                    when (it == INVISIBLE) {
+//                        true -> fabButton.hide()
+//                        false -> fabButton.show()
+//                    }
+//                }
+            }
+
+            fabButton.setOnClickListener {
+                commandActor.offer(EricCommand.EmailEricCommand)
+            }
+
+            with(viewModel) {
+                issueInitializeCommand()
+                state.value?.run { render(this) }
+                state.observe(this@EricFragment, Observer {
+                    render(it)
+                })
+
+            }
         }
 
+    }
 
-        whenClicking(fabButton) {
-            EricCommand.EmailEricCommand
-        } then { command ->
-            commandActor.offer(command)
-        }
-
+    override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
+        inflater?.inflate(R.menu.eric_menu, menu)
+        super.onCreateOptionsMenu(menu, inflater)
     }
 
     private fun render(state: EricState) {
@@ -99,9 +122,9 @@ class EricFragment : Fragment() {
             if (isLoading) renderLoadingState()
 
             when (navBarEnabled) {
-                true -> bottom_appbar.navigationIcon =
+                true -> navigationBar.navigationIcon =
                         context?.getDrawable(R.drawable.ic_menu_white_24dp)
-                false -> bottom_appbar.navigationIcon =
+                false -> navigationBar.navigationIcon =
                         null
             }
 
