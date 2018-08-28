@@ -1,14 +1,14 @@
-package com.publicmethod.ericdewildt.ui.eric.bow.pipeline
+package com.publicmethod.ericdewildt.ui.eric.archer.pipeline
 
 import arrow.core.*
 import arrow.data.Reader
 import arrow.data.State
 import com.publicmethod.archer.*
 import com.publicmethod.ericdewildt.threading.ContextProvider
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult.*
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricAction
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricResult
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricResult.*
+import com.publicmethod.ericdewildt.ui.eric.archer.states.EricState
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.delay

@@ -1,4 +1,4 @@
-package com.publicmethod.ericdewildt.ui.eric.bow.algebras
+package com.publicmethod.ericdewildt.ui.eric.archer.algebras
 
 import arrow.core.Either
 import com.publicmethod.archer.Result

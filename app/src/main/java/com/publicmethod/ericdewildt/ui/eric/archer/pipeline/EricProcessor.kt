@@ -1,13 +1,13 @@
-package com.publicmethod.ericdewildt.ui.eric.bow.pipeline
+package com.publicmethod.ericdewildt.ui.eric.archer.pipeline
 
 import arrow.core.*
 import arrow.data.Reader
 import com.publicmethod.archer.*
 import com.publicmethod.ericdewildt.threading.ContextProvider
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction.*
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult.*
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricAction
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricAction.*
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricResult
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricResult.*
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 

@@ -1,4 +1,4 @@
-package com.publicmethod.ericdewildt.ui.eric.bow
+package com.publicmethod.ericdewildt.ui.eric.archer
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -6,13 +6,13 @@ import androidx.lifecycle.ViewModel
 import com.publicmethod.archer.Archer
 import com.publicmethod.archer.archer
 import com.publicmethod.ericdewildt.threading.ContextProvider
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricAction
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricResult
-import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.interpretEricCommand
-import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.processEricAction
-import com.publicmethod.ericdewildt.ui.eric.bow.pipeline.reduceEricResult
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricAction
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricResult
+import com.publicmethod.ericdewildt.ui.eric.archer.pipeline.interpretEricCommand
+import com.publicmethod.ericdewildt.ui.eric.archer.pipeline.processEricAction
+import com.publicmethod.ericdewildt.ui.eric.archer.pipeline.reduceEricResult
+import com.publicmethod.ericdewildt.ui.eric.archer.states.EricState
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.produce

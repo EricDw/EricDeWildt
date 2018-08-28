@@ -6,10 +6,10 @@ import arrow.core.Some
 import com.publicmethod.ericdewildt.data.TestLeftEricRepository
 import com.publicmethod.ericdewildt.data.TestRightEricRepository
 import com.publicmethod.ericdewildt.scopes.GetEricScope
-import com.publicmethod.ericdewildt.ui.eric.bow.EricViewModel
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand
-import com.publicmethod.ericdewildt.ui.eric.bow.algebras.EricCommand.InitializeCommand
-import com.publicmethod.ericdewildt.ui.eric.bow.states.EricState
+import com.publicmethod.ericdewildt.ui.eric.archer.EricViewModel
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricCommand
+import com.publicmethod.ericdewildt.ui.eric.archer.algebras.EricCommand.InitializeCommand
+import com.publicmethod.ericdewildt.ui.eric.archer.states.EricState
 import com.publicmethod.kotlintestingutils.assertTrueWithMessage
 import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.runBlocking
