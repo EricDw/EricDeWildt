@@ -22,13 +22,22 @@ fun interpretEricCommand(): Reader<Tuple2<EricCommand, ActionChannel<EricAction>
 
         is EricCommand.DismissSnackBarCommand ->
             interpretDismissSnackBarCommand()
+
+        is EricCommand.NavigateToSettings ->
+            interpretSettingsCommand()
+
     }.some().toId()
 }
 
-private fun interpretInitializeCommand(
+fun interpretSettingsCommand() =
+    EricAction.NavigateToSettings
+
+fun interpretInitializeCommand(
     command: InitializeCommand
 ) = EricAction.InitializeAction(command.getEricScope)
 
-private fun interpretEmailEricCommand() = EricAction.EmailEricAction
+private fun interpretEmailEricCommand() =
+    EricAction.EmailEricAction
 
-private fun interpretDismissSnackBarCommand() = EricAction.DismissSnackBarAction
+private fun interpretDismissSnackBarCommand() =
+    EricAction.DismissSnackBarAction

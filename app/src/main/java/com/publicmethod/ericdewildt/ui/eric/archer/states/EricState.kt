@@ -14,6 +14,7 @@ data class EricState(
     val navBarEnabled: Boolean = false,
     val isLoading: Boolean = false,
     val showSnackBar: Boolean = false,
-    val supervisor: Option<SendChannel<EricAction>> = None
+    val supervisor: Option<SendChannel<EricAction>> = None,
+    val showSettings: Boolean = false
 ) : StateData
 

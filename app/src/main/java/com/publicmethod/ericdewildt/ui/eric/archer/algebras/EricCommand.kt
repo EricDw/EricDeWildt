@@ -8,6 +8,8 @@ sealed class EricCommand : Command {
         val getEricScope: GetEricScope
     ) : EricCommand()
 
+    object NavigateToSettings : EricCommand()
+
     object EmailEricCommand : EricCommand()
     object DismissSnackBarCommand : EricCommand()
 }

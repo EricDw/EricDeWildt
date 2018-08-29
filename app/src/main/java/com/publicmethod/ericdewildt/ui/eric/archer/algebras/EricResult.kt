@@ -19,4 +19,6 @@ sealed class EricResult : Result {
     object LoadingResult : EricResult()
     object EmailEricResult : EricResult()
     object DismissSnackBarResult : EricResult()
+    object ShowSettingsResult : EricResult()
+    object DoNotShowSettings : EricResult()
 }

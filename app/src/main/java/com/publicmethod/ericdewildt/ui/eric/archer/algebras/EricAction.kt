@@ -7,4 +7,5 @@ sealed class EricAction : Action {
     data class InitializeAction(val getEricScope: GetEricScope) : EricAction()
     object EmailEricAction : EricAction()
     object DismissSnackBarAction : EricAction()
+    object NavigateToSettings : EricAction()
 }

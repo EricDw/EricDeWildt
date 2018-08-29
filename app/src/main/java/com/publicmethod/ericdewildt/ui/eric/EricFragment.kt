@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import arrow.core.Option
@@ -56,9 +57,9 @@ class EricFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        setHasOptionsMenu(true)
         return inflater.inflate(R.layout.eric_fragment, container, false)
     }
-
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -116,6 +117,24 @@ class EricFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
+    override fun onContextItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.action_settings -> {
+                commandActor.offer(EricCommand.NavigateToSettings)
+            }
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.action_settings -> {
+                commandActor.offer(EricCommand.NavigateToSettings)
+            }
+        }
+        return true
+    }
+
     private fun render(state: EricState) {
         with(state) {
 
@@ -135,6 +154,31 @@ class EricFragment : Fragment() {
             eric.fold({}, {
                 renderShowEricState(it)
             })
+
+            when (showSettings) {
+                true -> {
+                    context?.apply {
+                        Toast.makeText(
+                            this,
+                            "Showing Settings",
+                            Toast.LENGTH_LONG
+                        ).apply {
+                            setGravity(Gravity.CENTER, 0, 0)
+                            show()
+                        }
+                    }
+                }
+
+                false -> {
+                    context?.apply {
+                        Toast.makeText(
+                            this,
+                            "Not Showing Settings",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
 
             when (showSnackBar) {
                 true -> renderShowEmailState()

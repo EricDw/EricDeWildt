@@ -89,4 +89,23 @@ class EricViewModelTest {
             )
         }
 
+    @Test
+    fun given_NavigateToSettingsCommand_return_showSettings_is_false() =
+        runBlocking(Unconfined) {
+            // Arrange
+            val input = EricCommand.NavigateToSettings
+            val expectedOutput = false
+
+            // Act
+            viewModel.send(input)
+            val actualOutput = state.showSettings
+
+            // Assert
+            assertTrueWithMessage(
+                input = input,
+                expectedOutput = expectedOutput,
+                actualOutput = actualOutput
+            )
+        }
+
 }

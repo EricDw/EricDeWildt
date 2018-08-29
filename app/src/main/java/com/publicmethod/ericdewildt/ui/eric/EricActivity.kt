@@ -18,10 +18,4 @@ class EricActivity : AppCompatActivity() {
                 .commitNow()
         }
     }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        val inflater = menuInflater
-        inflater.inflate(R.menu.eric_menu, menu)
-        return true
-    }
 }

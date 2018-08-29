@@ -24,7 +24,7 @@ fun reduceEricResult(
         State<Option<EricState>,
                 Option<EricState>> { optionalState ->
             optionalState.fold({
-                val newState = Some(EricState())
+                val newState = Some(EricState(showSettings = false))
                 newState toT newState
             }, { someState ->
                 return@State with(
@@ -56,6 +56,16 @@ fun reduceEricResult(
                                 context,
                                 result.resultChannel
                             )
+
+                        EricResult.ShowSettingsResult ->
+                            reduceShowSettings(
+                                someState
+                            )
+
+                        EricResult.DoNotShowSettings ->
+                            reduceDoNotShowSettings(
+                                someState
+                            )
                     }
                 ) {
                     launch(context) {
@@ -67,6 +77,16 @@ fun reduceEricResult(
             })
         }.toId()
     }
+
+fun reduceShowSettings(
+    someState: EricState
+): EricState =
+    someState.copy(showSettings = true)
+
+fun reduceDoNotShowSettings(
+    someState: EricState
+): EricState =
+    someState.copy(showSettings = false)
 
 fun reducedIssueWorkResult(
     ericAction: EricAction,
